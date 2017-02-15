@@ -1,0 +1,44 @@
+<?php
+/**
+ * Magestore
+ * 
+ * NOTICE OF LICENSE
+ * 
+ * This source file is subject to the Magestore.com license that is
+ * available through the world-wide-web at this URL:
+ * http://www.magestore.com/license-agreement.html
+ * 
+ * DISCLAIMER
+ * 
+ * Do not edit or add to this file if you wish to upgrade this extension to newer
+ * version in the future.
+ * 
+ * @category    Magestore
+ * @package     Magestore_Pdfinvoiceplus
+ * @copyright   Copyright (c) 2012 Magestore (http://www.magestore.com/)
+ * @license     http://www.magestore.com/license-agreement.html
+ */
+
+/** @var $installer Mage_Core_Model_Resource_Setup */
+$installer = $this;
+
+$installer->startSetup();
+
+$installer->getConnection()->addColumn(
+    $this->getTable('pdfinvoiceplus_template'), 
+    'shipment_filename', 
+    "varchar(255) default 'Shipment_{{var shipment_incremnet_id}}'"
+);
+$installer->getConnection()->addColumn(
+    $this->getTable('pdfinvoiceplus_template'), 
+    'barcode_shipment', 
+    "varchar(255) default '{{var shipment_incremnet_id}}'"
+);
+$installer->getConnection()->addColumn(
+    $this->getTable('pdfinvoiceplus_template'), 
+    'shipment_html', 
+    "mediumtext NOT NULL default ''"
+);
+
+$installer->endSetup();
+
