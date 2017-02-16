@@ -1,0 +1,1052 @@
+<?php
+
+class Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator extends Magestore_Pdfinvoiceplus_Model_Entity_Abstractextend {
+
+    const THE_START = '##productlist_start##';
+    const THE_END = '##productlist_end##';
+    public $pdfCollection;
+
+    /**
+     * The pdf proceesed template
+     * @var string
+     */
+    protected $_pdfProcessedTemplate;
+
+    /**
+     * Load the pdf system
+     * @return Mpdf Object - lib
+     */
+    protected function _construct()
+    {
+        $this->setPdfCollection();
+        parent::_construct();
+    }
+
+    public function setTheSourceId($orderId)
+    {
+        $this->_sourceId = $orderId;
+        return $this->_sourceId;
+    }
+
+    public function getTheSourceId()
+    {
+        return $this->_sourceId;
+    }
+     public function setPdfCollection()
+    {
+        $this->pdfCollection = Mage::getModel('pdfinvoiceplus/template')->getCollection();
+        return $this;
+    }
+
+    public function getPdfCollection()
+    {
+        return $this->pdfCollection;
+    }
+
+    public function getTheStoreId()
+    {
+        if ($storeId = $this->getTheOrder()->getStore()->getId())
+        {
+            return array(0, $storeId);
+        }
+        return array(0);
+    }
+
+    public function getFilteredCollection()
+    {
+        try {
+            $pdfGeneratorTemplate = Mage::helper('pdfinvoiceplus/pdf')->getUsingTemplate();
+//            if ($this->templateId)
+//            {
+//                $pdfGeneratorTemplate = $this->getPdfCollection()
+//                        ->addFieldToSelect('*')
+//                        ->addFieldToFilter('template_id',$this->templateId);
+//            }
+//            else
+//            {
+//                $pdfGeneratorTemplate = $this->getPdfCollection()
+//                        ->addFieldToSelect('*')
+//                        ->addFieldToFilter('status', 1);
+////                        ->addFieldToFilter('template_store_id', $this->getTheStoreId());
+//            }
+
+        } catch (Exception $e) {
+            Mage::log($e->getMessage());
+            return null;
+        }
+        return $pdfGeneratorTemplate;
+    }
+
+    public function createTemplate()
+    {
+        $pdfCollection = $this->getFilteredCollection();
+        if ($pdfCollection)
+        {
+            return $pdfCollection;
+        }
+//        foreach ($pdfCollection as $pdf)
+//        {
+//            $dataTemplate = $pdf;
+//        }
+
+//        if ($dataTemplate)
+//        {
+//            return $dataTemplate;
+//        }
+        return false;
+    }
+
+    public function getFileName() {
+        if ($fileName = $this->createTemplate()->getData('order_filename'))
+        {
+            $templateVars = $this->getVars();
+            $headerTemplate = Mage::helper('pdfinvoiceplus')->setTheTemplateLayout($fileName);
+            $processedTemplate = $headerTemplate->getProcessedTemplate($templateVars);
+
+            $cleanString = Mage::helper('core/string')->cleanString($processedTemplate);
+            $cleanString = str_replace(array(' ', '.', ':'), '-', $processedTemplate);
+            return $cleanString;
+        }
+        return 'order - ';
+    }
+     public function getBody()
+    {
+
+        if ($body = $this->createTemplate()->getData('order_html'))
+        {
+            return $body;
+
+        }
+        return false;
+    }
+
+    /**
+     * Get the template body from used in the backend with the varables and add the item variables.
+     * @return string
+     */
+    public function getTheTemplateBodyWithItems()
+    {
+        $templateToProcessForItems = $this->getBody();
+          /* Change by Zeus 08/12 */
+        $finalItems = NULL;
+        /* End change */
+        $items = Mage::getModel('pdfinvoiceplus/entity_itemsorder')
+                        ->setSource($this->getTheOrder())->setOrder($this->getTheOrder());
+        $itemsData = $items->processAllVars();
+
+        $result = Mage::helper('pdfinvoiceplus/items')
+                ->getTheItemsFromBetwin($templateToProcessForItems,self::THE_START, self::THE_END);
+        $i = 1;
+        foreach ($itemsData as $templateVars)
+        {
+            $itemPosition = array('items_position' => $i++);
+            $templateVars = array_merge($itemPosition, $templateVars);
+            $pdfProcessTemplate = Mage::getModel('core/email_template');
+            $itemProcess = $pdfProcessTemplate->setTemplateText($result)->getProcessedTemplate($templateVars);
+//            if($i%2==0){
+//                $itemProcess = str_replace('<tr class="items-tr background-items">','<tr>',$itemProcess);
+//            }
+            $finalItems .= $itemProcess . '<br>';
+        }
+        $templateWithItemsProcessed = str_replace($result, $finalItems, $templateToProcessForItems);
+
+        $tempmplateForHtmlProcess = '<html>' . $templateWithItemsProcessed . '</html>';
+
+
+        return $tempmplateForHtmlProcess;
+    }
+
+    /**
+     * Load the default information for the template processing
+     * @return object Mail template object
+     */
+    public function mainVariableProcess()
+    {
+        $templateText = $this->getTheTemplateBodyWithItems();
+        //auto insert totals
+        $total_order = Mage::getModel('pdfinvoiceplus/entity_totalsRender_order');
+        $total_order->setSource($this->getTheOrder())
+            ->setHtml($templateText)->setTemplateId($this->createTemplate()->getId());
+        $templateText = $total_order->renderHtml();
+
+        $theVariableProcessor = Mage::helper('pdfinvoiceplus')->setTheTemplateLayout($templateText);
+        return $theVariableProcessor;
+    }
+
+    /**
+     * The vars for the entity
+     * @return type
+     */
+    public function getTheProcessedTemplate()
+    {
+        $templateVars = $this->getVars();
+        $processedTemplate = $this->mainVariableProcess()->getProcessedTemplate($templateVars);
+        return $processedTemplate;
+    }
+
+    /**
+     * get system template in use
+     * @return system template
+     */
+    public function getSystemTemplate() {
+        $activeTemplate = Mage::getModel('pdfinvoiceplus/template')->getCollection()
+            ->addFieldToFilter('is_active', 1)
+            ->getFirstItem();
+        $systemTemplate = Mage::getModel('pdfinvoiceplus/systemtemplate')
+            ->load($activeTemplate->getSystemTemplateId());
+        return $systemTemplate;
+    }
+
+    public function getOrientation() {
+        $template = Mage::helper('pdfinvoiceplus/pdf')->getUsingTemplate();
+        $orientation = $template->getOrientation();
+        if ($orientation == 1)
+            return 'L';
+        return 'P';
+    }
+    /* Change by Jack 26/12 */
+    public function isMassPDF(){
+        $orderIds = Mage::app()->getRequest()->getPost('order_ids');
+        if($orderIds)
+            return true;
+        return false;
+    }
+    public function getPdf($html = '') {
+        include("lib/Mpdf/mpdf.php");
+        $isMassPDF = $this->isMassPDF();
+        $mailPdf = new Varien_Object;
+        $templateBody = $this->getTheProcessedTemplate();
+         $templateBody = str_replace("&quot;)",")",$templateBody);
+         $templateBody = str_replace("(&quot;","(",$templateBody);
+        $templateBody = "<html>
+<head>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-size: 14px;
+            max-width: 100%;
+            margin: 0 auto;
+            font-family: \"Ubuntu Regular\", \"Ubuntu Light\", arial;
+            font-size-adjust: none;
+            width: 100%;
+        }
+
+        .template04 div, p, span, th, td {
+            word-wrap: break-word;
+            word-break: break-all;
+        }
+
+        .template04 td {
+            vertical-align: top;
+        }
+
+        .template04 .items td.blanktotal {
+            background-color: #FFFFFF;
+            border: 0mm none #fff;
+            border-top: 0.1mm solid #fff;
+            border-right: 0.1mm solid #fff;
+        }
+
+        .template04 .top-title span {
+            display: block;
+            font-size: 15px;
+            color: #000;
+        }
+
+        .template04 .table-data tbody td.label {
+            color: #2f2f2f;
+            font-family: 'Ubuntu';
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .template04 .table-data thead tr {
+            border-bottom: 6px solid;
+            border-color: #CC0000;
+            height: 50px;
+        }
+
+        .template04 .myheader-iv {
+            width: 95%;
+            margin-right: 5%;
+            position: relative;
+            float: left;
+            clear: both;
+        }
+
+        .template04 .top-header-iv {
+            clear: both;
+            width: 100%;
+            float: left;
+        }
+
+        .template04 .bottom-header-iv {
+            clear: both;
+            width: 100%;
+            float: left;
+            margin-top: 10px;
+        }
+
+        .template04 .title-page-iv1 {
+            float: left;
+            width: 75%;
+        }
+
+        .template04 .title-page-iv1 .order1 {
+            font-family: 'Ubuntu Regular';
+            color: #FFFFFF;
+            text-align: left;
+            font-size: 25px;
+            line-height: 50px;
+            font-weight: normal;
+            text-transform: uppercase;
+            background-color: #cc0000;
+            width: 50%;
+            padding-left: 5.334%;
+        }
+
+        .template04 .barcode {
+            margin-top: 5px;
+            margin-bottom: 5px;
+            float: left;
+            text-align: left;
+            margin-left: 5.334%;
+        }
+
+        .barcode:before {
+            content: \"\";
+            display: block;
+            width: 160px;
+            height: 100px;
+            background: url(\"http://localhost/pdfinvoice/media/magestore/pdfinvoiceplus/barcode/QR.jpg\") no-repeat;
+        }
+
+        .template04 .logo-iv {
+            width: 30%;
+            text-align: right;
+            float: right;
+        }
+
+        .template04 .id-order-iv {
+            text-align: left;
+            width: 45%;
+            float: left;
+            margin-left: 4%;
+        }
+
+        .template04 .info-iv {
+            width: 50%;
+            color: #000;
+            font-size: 15px;
+            text-align: right;
+            float: right;
+        }
+
+        .template04 .main-content {
+            clear: both;
+            margin: 0 3.6% 0 3.6%;
+            max-width: 92.8%;
+        }
+
+        .template04 .info-cus {
+            float: left;
+            width: 100%;
+        }
+
+        .template04 .payment-box, .template04 .billing-box {
+            width: 49%;
+            float: left;
+        }
+
+        .template04 .shipping-box, .template04 .shipping-add-box {
+            float: right;
+            width: 49%;
+        }
+
+        .template04 .title-label {
+            color: #CC0000;
+            font-family: 'Ubuntu';
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            padding: 0 20px;
+        }
+
+        .template04 .shipping-box .content, .template04 .shipping-add-box .content, .template04 .payment-box .content, .template04 .billing-box .content {
+            border-top: 6px solid #cc0000;
+            border-left: 1px solid #a9a9a9;
+            border-right: 1px solid #a9a9a9;
+            border-bottom: 1px solid #a9a9a9;
+            padding: 10px 20px;
+            margin-top: 5px;
+        }
+
+        .template04 .top-main-if {
+            float: left;
+            width: 100%;
+            clear: both;
+        }
+
+        .template04 .bottom-main-info {
+            clear: both;
+            margin: 0 3.6% 0 3.6%;
+            max-width: 92.8%;
+        }
+
+        .template04 .grandtotal {
+            background: #ffe8e8;
+            font-size: 20px;
+        }
+
+        .template04 .grandtotal tfoot td {
+            border-top: 7px solid #fff !important;
+            text-align: right;
+            padding: 5px 20px;
+        }
+
+        .template04 .grandtotal tfoot td.label strong {
+            line-height: 40px;
+        }
+
+        .template04 .grandtotal tbody td {
+            border: 0 none;
+            text-align: right;
+        }
+
+        .template04 table thead td {
+            font-size: 18px;
+            color: #CC0000;
+            text-align: center;
+            font-weight: bold;
+            padding: 12px 20px;
+            text-transform: uppercase;
+            vertical-align: middle;
+        }
+
+        .template04 .tbody-2 {
+            border-bottom: 1px solid #d6d6d6;
+        }
+
+        .template04 .tbody-2 td {
+            background: #e9e9e9;
+        }
+
+        .template04 .items-tr {
+            background: #e9e9e9;
+        }
+
+        .template04 .table-data tbody {
+            text-align: left;
+        }
+
+        .template04 .table-data tbody td {
+            padding: 12px 20px;
+            color: #2f2f2f;
+        }
+
+        .template04 .table-data tbody td.a-right {
+            text-align: right;
+        }
+
+        .template04 .table-data tbody td.last {
+            text-align: right;
+        }
+
+        .template04 div.title {
+            width: 88.5%
+        }
+
+        .footer-total {
+            width: 100%
+        }
+
+        .template04 .grand_total {
+            color: #e00000;
+            font-size: 20px;
+            font-family: 'Ubuntu';
+        }
+
+        .template04 .row-grandtotal {
+            border-top: 0.1mm solid #fff;
+        }
+
+        .template04 .list-detail {
+            border-style: solid;
+            border-width: 0px 0px 6px 0px;
+            border-color: #cc0000;
+        }
+
+        .template04 .show-product-chan {
+            background-color: #D6D6D6;
+        }
+
+        .template04 .show-product-le {
+            background-color: #fff;
+        }
+
+        .footer-template04 {
+            background: #CC0000;
+            color: #FFFFFF;
+            font-size: 14px;
+            margin-top: 10px;
+            padding: 10px 5%;
+            text-align: center;
+            width: 90%;
+            position: absolute;
+            bottom: 0;
+        }
+
+        .template04 div.footer-text {
+            font-family: 'Ubuntu';
+            color: #FFFFFF;
+        }
+
+        .template04 .term-conditions {
+            margin-top: 20px;
+            margin-bottom: 30px;
+        }
+
+        .template04 .totals {
+            float: right;
+            width: 49%;
+            background: #e9e9e9;
+        }
+
+        .template04 .body-total {
+            height: auto;
+            float: right;
+            margin: 10px;
+        }
+
+        .template04 .total-row {
+            width: 100%;
+            text-align: right;
+            float: right;
+            padding: 5pt 0pt;
+        }
+
+        .template04 .total-row-grand {
+            border-top: 1px solid #fff;
+        }
+
+        .template04 .total-label {
+            font-family: 'Ubuntu';
+            font-size: 11pt;
+            color: #2F2F2F;
+            width: 45%;
+            float: left;
+            height: 22pt;
+        }
+
+        .template04 .total-value {
+            font-size: 11pt;
+            width: 45%;
+            height: 22pt;
+            float: right;
+        }
+
+        .template04 .grand-total, .template04 .grand-total-value, .template04 .grand-total-label {
+            font-family: 'Ubuntu';
+            font-weight: bold;
+            font-size: 12pt;
+        }
+
+        .template04 .grand-total-value {
+            color: #bf2323;
+        }
+
+        .template04 .note {
+            padding: 20px 5%;
+            border: 1px solid #D6D6D6;
+        }
+
+        .template04 .note-box {
+            width: 49%;
+            float: left;
+        }
+
+        .template04 .general-info {
+            display: block;
+            width: 100%;
+            float: left;
+            font-family: 'Ubuntu Light';
+            font-size: 15px;
+        }
+
+        .template04 .general-info .info-label {
+            font-weight: bold;
+        }
+
+        #container-inner {
+            position: relative;
+            height: auto;
+            padding: 0px;
+            margin: 0 auto;
+            border: 0px;
+            word-wrap: normal;
+            padding-bottom: 10px;
+        }
+
+        .template04 .p-note, .template04 .term-conditions p {
+            text-align: justify;
+        }     
+        @page second {
+            background-image: url(http://localhost/pdfinvoice/media/magestore/pdfinvoiceplus/background/246497.png);
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+        </style>
+</head>
+<body>
+<div id=\"container-inner\" class=\"template04\"
+     style=\"background-image: url(http://localhost/pdfinvoice/media/magestore/pdfinvoiceplus/background/gift-reciept-06-01_1_.png);background-size: cover;height: 16.6in !important;\">
+    <div class=\"myheader-iv\" style=\"padding-top: 20px; padding-bottom: 20px;\">
+        <div class=\"top-header-iv\">
+            <div class=\"title-page-iv1\">
+                <div class=\"order1 title-color contenteditable color-theme\" contextmenu-type=\"main\"
+                     title=\"Click to edit, right-click to insert variable\" contenteditable=\"true\" style=\"\"> Order
+                </div>
+                <div class=\"barcode\" style=\"\">                                             <!-- -->
+                    <barcode code=\"145000006\" type=\"QR\"></barcode>
+                </div>
+            </div>
+            <div class=\"box-logo ajaxupload\" style=\"margin-top: 0px;text-align: right; float: right\"
+                 info-img=\"company_logo\" title=\"Click to upload...\"></div>
+        </div>
+        <div class=\"bottom-header-iv\" contextmenu-type=\"main\">
+            <div class=\"id-order-iv\">
+                <div contextmenu-type=\"main\" style=\"font-family: 'Ubuntu Medium';font-size: 26px;\"
+                     class=\"content contenteditable\" contenteditable=\"true\"><span class=\"color-text contenteditable\"
+                                                                                  title=\"Click to edit, right-click to insert variable\"
+                                                                                  contenteditable=\"true\"
+                                                                                  style=\"font-family: 'Ubuntu Medium';font-size: 26px;\">#145000011106</span><br>
+                    <span class=\"color-text contenteditable\" title=\"Click to edit, right-click to insert variable\"
+                          contenteditable=\"true\" style=\"color: #010101;font-size: 18px;\">1/5/2017 2:11 AM</span></div>
+                <div class=\"status color-text contenteditable\" title=\"Click to edit, right-click to insert variable\"
+                     contenteditable=\"true\" style=\"margin-top: 5px;\"><span style=\"font-weight: bold;\">Status: </span>
+                    pending
+                </div>
+            </div>
+            <div contextmenu-type=\"main\" contenteditable=\"true\" title=\"Click to edit...\"
+                 class=\"box-infomations autogrow info-iv contenteditable\"><span class=\"title-color\"
+                                                                                title=\"Click to edit, right-click to insert variable\"
+                                                                                style=\"display: block; font-weight: bold; font-size: 18px; color: #CC0000; width:100%; float: left;font-family: 'Ubuntu';text-transform: uppercase;\"
+                                                                                info-text=\"company_name\">Magestore</span><br>
+                <span class=\"color-text\" title=\"Click to edit, right-click to insert variable\"
+                      style=\"display: block; font-family: 'Ubuntu Light'; font-size: 14px;width:100%;float: left;\"><strong>Address: </strong><info
+                        info-text=\"company_address\">170 la thanh</info></span><br> <span class=\"color-text\"
+                                                                                         title=\"Click to edit, right-click to insert variable\"
+                                                                                         style=\"display: block;width:100%;float: left; \"><strong> Email: </strong> <info
+                        info-text=\"company_email\">test@gmail.com</info></span><br> <span class=\"color-text\"
+                                                                                         title=\"Click to edit, right-click to insert variable\"
+                                                                                         style=\"display: block; width:100%;float: left; \"><strong>Tel: </strong><info
+                        info-text=\"company_telephone\">01665937926</info></span><br> <span class=\"color-text\"
+                                                                                          title=\"Click to edit, right-click to insert variable\"
+                                                                                          style=\"display: block;width:100%;float: left; \"><strong>Fax: </strong><info
+                        info-text=\"company_fax\">1212fsd fdsf sd</info></span><br> <span class=\"color-text\"
+                                                                                        title=\"Click to edit, right-click to insert variable\"
+                                                                                        style=\"display: block;width:100%;float: left; \"><strong>Business Id: </strong><info
+                        info-text=\"business_id\">20121830</info></span><br> <span class=\"color-text\"
+                                                                                 title=\"Click to edit, right-click to insert variable\"
+                                                                                 style=\"display: block;width:100%;float: left; \"><strong>VAT Number: </strong><info
+                        info-text=\"vat_number\">1252215</info></span><br> <span class=\"color-text\"
+                                                                               title=\"Click to edit, right-click to insert variable\"
+                                                                               style=\"display: block;width:100%;float: left; \"><strong>VAT Office: </strong><info
+                        info-text=\"vat_office\">124543  fdsf dsfa sd</info></span><br></div>
+        </div>
+    </div>
+    <div class=\"main-content\">
+        <div class=\"top-main-if\">
+            <div class=\"info-cus\">
+                <div class=\"billing-box\">
+                    <div><span title=\"Click to edit, right-click to insert variable\" contenteditable=\"true\"
+                               class=\"title-color title-label contenteditable\">Billing Address</span></div>
+                    <div class=\"content contenteditable\" contenteditable=\"true\">
+                        <address contextmenu-type=\"main\" title=\"Click to edit, right-click to insert variable\"
+                                 contenteditable=\"true\" class=\"contenteditable\">Jane Doe<br/>
+
+                            10441 Jefferson Blvd, Suite 200<br/>
+
+
+                            Culver City, California, 90232<br/>
+                            United States<br/>
+                            T: 888-888-8888
+
+                        </address>
+                    </div>
+                </div>
+                <div class=\"shipping-add-box\">
+                    <div class=\"title1\"><span title=\"Click to edit, right-click to insert variable\"
+                                              contenteditable=\"true\" class=\"title-color title-label contenteditable\">Shipping Address</span>
+                    </div>
+                    <div class=\"content contenteditable\" contenteditable=\"true\">
+                        <address contextmenu-type=\"main\" title=\"Click to edit, right-click to insert variable\"
+                                 contenteditable=\"true\" class=\"contenteditable\">Jane Doe<br/>
+
+                            10441 Jefferson Blvd, Suite 200<br/>
+
+
+                            Culver City, California, 90232<br/>
+                            United States<br/>
+                            T: 888-888-8888
+
+                        </address>
+                    </div>
+                </div>
+            </div>
+            <div class=\"info-cus\" style=\"margin-top: 25px; margin-bottom: 25px;\">
+                <div class=\"payment-box\">
+                    <div class=\"title1\"><span contenteditable=\"true\"
+                                              title=\"Click to edit, right-click to insert variable\"
+                                              class=\"contenteditable title-color title-label\">Payment Method</span>
+                    </div>
+                    <div class=\"content contenteditable\" contextmenu-type=\"main\"
+                         title=\"Click to edit, right-click to insert variable\" contenteditable=\"true\"> Cash On Delivery
+                    </div>
+                </div>
+                <div class=\"shipping-box\">
+                    <div class=\"title1\"><span contenteditable=\"true\"
+                                              title=\"Click to edit, right-click to insert variable\"
+                                              class=\"contenteditable title-color title-label\">Shipping Method</span>
+                    </div>
+                    <div class=\"content contenteditable\" contextmenu-type=\"main\"
+                         title=\"Click to edit, right-click to insert variable\" contenteditable=\"true\"> Free Shipping -
+                        Free
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class=\"bottom-main-info\">
+        <table id=\"table-item\" class=\"items table-data relative CRZ ui-resizable\" width=\"100%\"
+               style=\"border-collapse: collapse;\" cellpadding=\"6\">
+            <thead>
+            <tr>
+                <th title=\"Click to edit, right-click to insert variable\" class=\"color-theme label contenteditable\"
+                    contenteditable=\"true\" style=\"font-family: Ubuntu; text-align: left; width: 9.75207%;\"
+                    placeholder=\"Click to edit!\">No.
+                </th>
+                <th title=\"Click to edit, right-click to insert variable\" class=\"color-theme label contenteditable\"
+                    contenteditable=\"true\" style=\"font-family: Ubuntu; text-align: left; width: 33.6364%;\"
+                    placeholder=\"Click to edit!\">Product
+                </th>
+                <th title=\"Click to edit, right-click to insert variable\" class=\"color-theme label contenteditable\"
+                    contenteditable=\"true\" style=\"font-family: Ubuntu; text-align: left; width: 12.4793%;\"
+                    placeholder=\"Click to edit!\">SKU
+                </th>
+                <th title=\"Click to edit, right-click to insert variable\" class=\"color-theme label contenteditable\"
+                    contenteditable=\"true\" style=\"font-family: Ubuntu; text-align: right; width: 12.3967%;\"
+                    placeholder=\"Click to edit!\">Price
+                </th>
+                <th title=\"Click to edit, right-click to insert variable\" class=\"color-theme label contenteditable\"
+                    contenteditable=\"true\" style=\"font-family: Ubuntu; text-align: right; width: 12.3967%;\"
+                    placeholder=\"Click to edit!\">QTY
+                </th>
+                <th title=\"Click to edit, right-click to insert variable\" class=\"color-theme label contenteditable\"
+                    contenteditable=\"true\" style=\"font-family: Ubuntu; text-align: right; width: 9.58678%;\"
+                    placeholder=\"Click to edit!\">Tax
+                </th>
+                <th title=\"Click to edit, right-click to insert variable\" class=\"color-theme label contenteditable\"
+                    contenteditable=\"true\" style=\"font-family: Ubuntu; text-align: right; width: 9.75207%;\"
+                    placeholder=\"Click to edit!\">Subtotal
+                </th>
+            </tr>
+            </thead>
+            <tbody>                             <!-- ITEMS HERE -->
+            <!--            ##productlist_start##-->
+            <tr class=\"style-border-color\">
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"center\" placeholder=\"Click to edit!\">1
+                </td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"left\" placeholder=\"Click to edit!\">Aviator Sunglasses<br></td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"left\" placeholder=\"Click to edit!\">ace000
+                </td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"right\" placeholder=\"Click to edit!\">$295.00
+                </td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"right\" placeholder=\"Click to edit!\"> Ordered: 1<br> <br></td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"right\" placeholder=\"Click to edit!\">$26.55
+                </td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"right\" placeholder=\"Click to edit!\">$295.00
+                </td>
+            </tr>                             <!--<br>-->
+            <tr class=\"style-border-color\">
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"center\" placeholder=\"Click to edit!\">2
+                </td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"left\" placeholder=\"Click to edit!\">Silver Desert Necklace<br></td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"left\" placeholder=\"Click to edit!\">acj000
+                </td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"right\" placeholder=\"Click to edit!\">$210.00
+                </td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"right\" placeholder=\"Click to edit!\"> Ordered: 1<br> <br></td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"right\" placeholder=\"Click to edit!\">$18.90
+                </td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"right\" placeholder=\"Click to edit!\">$210.00
+                </td>
+            </tr>                             <!--<br>-->
+            <tr class=\"style-border-color\">
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"center\" placeholder=\"Click to edit!\">3
+                </td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"left\" placeholder=\"Click to edit!\">Barclay d'Orsay pump, Nude<br>Color - Taupe<br/>Shoe size
+                    - 9<br/></td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"left\" placeholder=\"Click to edit!\">aws003
+                </td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"right\" placeholder=\"Click to edit!\">$390.00
+                </td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"right\" placeholder=\"Click to edit!\"> Ordered: 1<br> <br></td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"right\" placeholder=\"Click to edit!\">$35.10
+                </td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"right\" placeholder=\"Click to edit!\">$390.00
+                </td>
+            </tr>                             <!--<br>-->
+            <tr class=\"style-border-color\">
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"center\" placeholder=\"Click to edit!\">4
+                </td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"left\" placeholder=\"Click to edit!\">Pillow and Throw Set<br></td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"left\" placeholder=\"Click to edit!\">hdb010-hdb007-hdb005
+                </td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"right\" placeholder=\"Click to edit!\"></td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"right\" placeholder=\"Click to edit!\"> Ordered: 1<br> <br></td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"right\" placeholder=\"Click to edit!\">$0.00
+                </td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"right\" placeholder=\"Click to edit!\"></td>
+            </tr>                             <!--<br>-->
+            <tr class=\"style-border-color\">
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"center\" placeholder=\"Click to edit!\">5
+                </td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"left\" placeholder=\"Click to edit!\">Titian Raw Silk Pillow<br></td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"left\" placeholder=\"Click to edit!\">hdb005
+                </td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"right\" placeholder=\"Click to edit!\">$100.00
+                </td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"right\" placeholder=\"Click to edit!\"> Ordered: 3<br> <br></td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"right\" placeholder=\"Click to edit!\">$27.00
+                </td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"right\" placeholder=\"Click to edit!\">$300.00
+                </td>
+            </tr>                             <!--<br>-->
+            <tr class=\"style-border-color\">
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"center\" placeholder=\"Click to edit!\">6
+                </td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"left\" placeholder=\"Click to edit!\">Carnegie Alpaca Throw<br></td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"left\" placeholder=\"Click to edit!\">hdb007
+                </td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"right\" placeholder=\"Click to edit!\">$275.00
+                </td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"right\" placeholder=\"Click to edit!\"> Ordered: 1<br> <br></td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"right\" placeholder=\"Click to edit!\">$24.75
+                </td>
+                <td class=\"color-text contenteditable background-items\"
+                    title=\"Click to edit, right-click to insert variable\" contextmenu-type=\"item\" contenteditable=\"true\"
+                    align=\"right\" placeholder=\"Click to edit!\">$275.00
+                </td>
+            </tr>                             <!--<br>            ##productlist_end##-->
+            </tbody>
+        </table>
+        <table width=\"100%\">
+            <tbody>
+            <tr>
+                <th title=\"Click to edit, right-click to insert variable\" class=\"color-theme label contenteditable\"
+                    contenteditable=\"true\" width=\"71%\" style=\"font-family:'Ubuntu';text-align:right;\"
+                    placeholder=\"Click to edit!\">Total Qty
+                </th>
+                <th title=\"Click to edit, right-click to insert variable\" class=\"color-theme label contenteditable\"
+                    contenteditable=\"true\" width=\"29%\" style=\"font-family:'Ubuntu';text-align:left;\"
+                    placeholder=\"Click to edit!\">4
+                </th>
+            </tr>
+            </tbody>
+        </table>
+        <div class=\"after-item\" style=\"width:100%;display:inline-block;padding-top:20px;\">
+            <div class=\"order-totals\" style=\"width:100%; float: left;margin-top: 20px;\">
+                <div class=\"note-box\">
+                    <div contextmenu-type=\"main\" contenteditable=\"true\"
+                         title=\"Click to edit, right-click to insert variable\"
+                         class=\"color-text note p-note contenteditable\"><strong>Note: </strong> <span class=\"info-value\"
+                                                                                                      info-text=\"note\">ko co note</span>
+                    </div>
+                </div>
+                <div class=\"totals autogrow contenteditable background-items\" contenteditable=\"true\"
+                     title=\"Click to edit...\">
+                    <div class=\"body-total\" title=\"Click to edit, right-click to insert variable\">
+                        <div class=\"total-row background-items\" contextmenu-type=\"main\">
+                            <div class=\"total-label color-text\">Tax</div>
+                            <div class=\"total-value color-text\">$132.30</div>
+                        </div>
+                        <div class=\"total-row background-items\" contextmenu-type=\"main\">
+                            <div class=\"total-label color-text\">Subtotal</div>
+                            <div class=\"total-value color-text\">$1,470.00</div>
+                        </div>
+                        <div class=\"total-row background-items\" contextmenu-type=\"main\">
+                            <div class=\"total-label color-text\">Shipping</div>
+                            <div class=\"total-value color-text\">$0.00</div>
+                        </div>
+                        <div class=\"total-row total-row-grand background-items\" contextmenu-type=\"main\">
+                            <div class=\"total-label color-text grand-total\">Grand Total</div>
+                            <div class=\"total-value color-text grand-total grand-total-value\">$1,602.30</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class=\"term-conditions\">
+            <div contextmenu-type=\"main\" contenteditable=\"true\" title=\"Click to edit, right-click to insert variable\"
+                 class=\"contenteditable color-text term p-note\"><strong>Term: </strong><span class=\"info-value\"
+                                                                                             info-text=\"terms_conditions\">ko co term</span>
+            </div>
+        </div>
+    </div>
+</div>
+<div id=\"footer\" class=\"footer-template04 color-text style-color\" name=\"myfooter\" style=\"height: 0px;\">
+    <div contextmenu-type=\"main\" contenteditable=\"true\" title=\"Click to edit, right-click to insert variable\"
+         class=\"color-text contenteditable\" style=\"padding-left:3.5%;padding-top: 10px;width: 100%; \"
+         info-text=\"footer\">ko co footer
+    </div>
+</div>
+</body>
+
+</html>";
+        if($isMassPDF){
+            $mailPdf->setData('htmltemplate', $templateBody);
+            $mailPdf->setData('filename', $this->getFileName());
+        }
+        else{
+            $pdf = $this->loadPdf();
+            $pdf->WriteHTML($this->getCss(), 1);
+            $pdf->WriteHTML($templateBody);
+            $mailPdf->setData('htmltemplate', $templateBody);
+            $output = $pdf->Output($this->getFileName(), 'S');
+            /*show pdf preview*/
+            $pdf->Output('Promocard.pdf', 'I');
+            /*end show pdf preview*/
+            $mailPdf->setData('pdfbody', $output);
+            $mailPdf->setData('filename', $this->getFileName());
+        }
+//        echo $templateBody;
+        return $mailPdf;
+    }
+    // End Change
+    public function pdfPaperFormat() {
+        $template = Mage::helper('pdfinvoiceplus/pdf')->getUsingTemplate();
+        $format = $template->getFormat();
+        $format = $format ? $format : 'A4';
+        return $format;
+    }
+
+    public function loadPdf() {
+        $template = Mage::helper('pdfinvoiceplus/pdf')->getUsingTemplate();
+        if($template->getData('template_id') == 2){
+            $top = '0';
+        }else{
+            $top = '5';
+        }
+
+        $bottom = '0';
+        $left = '0';
+        $right = '0';
+        $orientation = $this->getOrientation();
+        if($template->getData('template_id') == 2){
+            $pdf = new Mpdf_Magestorepdf('', 'A5', 8, '', $left, $right, $top, $bottom);
+        }else{
+            $pdf = new Mpdf_Magestorepdf('', $this->pdfPaperFormat(), 8, '', $left, $right, $top, $bottom);
+        }
+        $pdf->AddPage($orientation);
+        //Change by Jack 29/12 - add page number
+            $storeId = Mage::app()->getStore()->getStoreId();
+            $isEnablePageNumbering = Mage::getStoreConfig('pdfinvoiceplus/general/page_numbering',$storeId);
+            if($isEnablePageNumbering)
+               if($isEnablePageNumbering)
+                $pdf->SetHTMLFooter('<div style = "float:right;z-index:16000 !important; width:30px;">{PAGENO}/{nb}</div>');
+        // End Change
+        $pdf->SetWatermarkImage('http://localhost/pdfinvoice/media/magestore/pdfinvoiceplus/background/gift-reciept-06-01_1_.png');
+
+        $pdf->showWatermarkImage = true;
+
+        $pdf->watermarkImageAlpha = 1;
+        return $pdf;
+    }
+}

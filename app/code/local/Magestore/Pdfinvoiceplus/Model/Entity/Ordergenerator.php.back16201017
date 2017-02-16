@@ -69,7 +69,7 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator extends Magestore_Pdf
 //                        ->addFieldToFilter('status', 1);
 ////                        ->addFieldToFilter('template_store_id', $this->getTheStoreId());
 //            }
-            
+
         } catch (Exception $e) {
             Mage::log($e->getMessage());
             return null;
@@ -115,7 +115,7 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator extends Magestore_Pdf
         if ($body = $this->createTemplate()->getData('order_html'))
         {
             return $body;
-            
+
         }
         return false;
     }
@@ -133,7 +133,7 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator extends Magestore_Pdf
         $items = Mage::getModel('pdfinvoiceplus/entity_itemsorder')
                         ->setSource($this->getTheOrder())->setOrder($this->getTheOrder());
         $itemsData = $items->processAllVars();
-        
+
         $result = Mage::helper('pdfinvoiceplus/items')
                 ->getTheItemsFromBetwin($templateToProcessForItems,self::THE_START, self::THE_END);
         $i = 1;
@@ -152,7 +152,6 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator extends Magestore_Pdf
 
         $tempmplateForHtmlProcess = '<html>' . $templateWithItemsProcessed . '</html>';
 
-        //$htmlTemplateWithItems = Mage::helper('pdfinvoiceplus/items')->processHtml($tempmplateForHtmlProcess);
 
         return $tempmplateForHtmlProcess;
     }
@@ -169,7 +168,7 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator extends Magestore_Pdf
         $total_order->setSource($this->getTheOrder())
             ->setHtml($templateText)->setTemplateId($this->createTemplate()->getId());
         $templateText = $total_order->renderHtml();
-        
+
         $theVariableProcessor = Mage::helper('pdfinvoiceplus')->setTheTemplateLayout($templateText);
         return $theVariableProcessor;
     }
@@ -213,26 +212,29 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator extends Magestore_Pdf
         return false;
     }
     public function getPdf($html = '') {
+        include("lib/Mpdf/mpdf.php");
         $isMassPDF = $this->isMassPDF();
         $mailPdf = new Varien_Object;
+        $templateBody = $this->getTheProcessedTemplate();
+         $templateBody = str_replace("&quot;)",")",$templateBody);
+         $templateBody = str_replace("(&quot;","(",$templateBody);
         if($isMassPDF){
-            $templateBody = $this->getTheProcessedTemplate();
             $mailPdf->setData('htmltemplate', $templateBody);
             $mailPdf->setData('filename', $this->getFileName());
         }
         else{
             $pdf = $this->loadPdf();
-            $templateBody = $this->getTheProcessedTemplate();
             $pdf->WriteHTML($this->getCss(), 1);
             $pdf->WriteHTML($templateBody);
-
             $mailPdf->setData('htmltemplate', $templateBody);
             $output = $pdf->Output($this->getFileName(), 'S');
-            $output = $pdf->Output($this->getFileName(), 'I');
-//            return;
+            /*show pdf preview*/
+//            $pdf->Output('Promocard.pdf', 'I');
+            /*end show pdf preview*/
             $mailPdf->setData('pdfbody', $output);
             $mailPdf->setData('filename', $this->getFileName());
         }
+//        echo $templateBody;
         return $mailPdf;
     }
     // End Change
@@ -262,12 +264,14 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator extends Magestore_Pdf
         }
         $pdf->AddPage($orientation);
         //Change by Jack 29/12 - add page number
-        $storeId = Mage::app()->getStore()->getStoreId();
-        $isEnablePageNumbering = Mage::getStoreConfig('pdfinvoiceplus/general/page_numbering',$storeId);
-        if($isEnablePageNumbering)
+            $storeId = Mage::app()->getStore()->getStoreId();
+            $isEnablePageNumbering = Mage::getStoreConfig('pdfinvoiceplus/general/page_numbering',$storeId);
             if($isEnablePageNumbering)
+               if($isEnablePageNumbering)
                 $pdf->SetHTMLFooter('<div style = "float:right;z-index:16000 !important; width:30px;">{PAGENO}/{nb}</div>');
         // End Change
+
+
         return $pdf;
     }
 }
