@@ -109,6 +109,16 @@
                             <show_in_store>1</show_in_store>
                             <comment>Select attribute to sort product in pdf file</comment>
                         </sort_order_pdf>
+                        <gift_message translate="label">
+                            <label>Gift message default</label>
+                            <frontend_type>textarea</frontend_type>
+                            <sort_order>41</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <validate>validate-length maximum-length-500</validate>
+                            <comment>Maximun length 500</comment>
+                        </gift_message>
                        <!-- End Change --> 
                     </fields>
                 </general>

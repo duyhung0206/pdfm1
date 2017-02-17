@@ -28,6 +28,22 @@
  */
 class Magestore_Pdfinvoiceplus_Helper_Data extends Mage_Core_Helper_Abstract
 {
+    public function handleStringAddress($string){
+        $arraySI = explode('<br/>', $string);
+        $telephone = '';
+        foreach ($arraySI as $key => $SI){
+            if(strpos($SI, 'T:') != false){
+                $telephone = substr(trim($SI), 3);
+                unset($arraySI[$key]);
+            }
+        }
+        $string = '';
+        foreach ($arraySI as $SI){
+            $string.= $SI.'<br/>';
+        }
+        $string.='<br/>'.$telephone;
+        return $string;
+    }
     //start
     public function getPrintPdfLink($type, $orderId)
     {

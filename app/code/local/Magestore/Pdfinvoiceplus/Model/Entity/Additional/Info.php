@@ -387,7 +387,6 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Additional_Info extends Magestore_Pd
         } else {
             $shippingInfo = '';
         }
-
         $variables = array(
             $type.'_shipping_method' => array(
                 'value' => $shippingInfo,
@@ -405,6 +404,9 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Additional_Info extends Magestore_Pd
         } else {
             $shippingInfo = '';
         }
+        $billingInfo = Mage::helper('pdfinvoiceplus')->handleStringAddress($billingInfo);
+        $shippingInfo = Mage::helper('pdfinvoiceplus')->handleStringAddress($shippingInfo);
+
         $variables = array(
             $type.'_billing_address' => array(
                 'value' => $billingInfo,
@@ -415,6 +417,7 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Additional_Info extends Magestore_Pd
                 'label' => Mage::helper('sales')->__('Shipping Address'),
             )
         );
+
         return $variables;
     }
     /* change by Jack 27/12 */

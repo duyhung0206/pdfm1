@@ -3,6 +3,13 @@
 
 
 
+
+
+
+
+
+
+
     <style>
         * {
             margin: 0;
@@ -424,7 +431,7 @@
 
 
     </div>
-    <div id="order-info" style="height: 0.6in;width: 100%;float: left;border-left: 1px solid;">
+    <div id="order-info" style="height: 0.75in;width: 100%;float: left;border-left: 1px solid;">
     <div id="order-no" style="
     padding-left: 0.69in;
     width: 29%;
@@ -457,7 +464,7 @@
 </div>
 
 </div>
-    <div id="sidedown" class="bottom-main-info" style="
+    <div id="sidedown" style="
     background-image: url(http://localhost/pdfinvoice/media/magestore/pdfinvoiceplus/background/gift-reciept-06-01_1_.png);
     background-size: cover;
     width: 5.8in;
@@ -465,48 +472,79 @@
     background-position: bottom;
     margin: auto;
 ">
-        <table id="table-item" class="items table-data relative ui-resizable CRZ" width="100%" style="border-collapse: collapse;font-size: 9px;" cellpadding="6">
+    <div class="bottom-main-info" style="
+    padding-top: 0.89in;
+    height: 7in;
+    max-height: 7in;
+">
+
+        <div class="CRC control-ui" id="table-item-CRC" style="width: 516px; margin-top: 0px;"><div class="CRG" style="left: 95px; height: 83px;"><div class="CRZ" style="cursor:e-resize"></div><div class="table-item-remove-col-ui mytable-remove-col control-ui"></div></div><div class="CRG" style="left: 335px; height: 83px;"><div class="CRZ" style="cursor:e-resize"></div><div class="table-item-remove-col-ui mytable-remove-col control-ui"></div></div><div class="CRL" style="left: 517px; height: 83px;"><div class="table-item-remove-col-ui mytable-remove-col control-ui"></div></div><div class="table-item-add-col-ui mytable-add-col control-ui" style="z-index: 1999"></div></div><table id="table-item" class="items table-data relative ui-resizable CRZ" width="100%" style="border-collapse: collapse;font-size: 10px;" cellpadding="6">
             <thead>
-            <tr>
+            <tr style="
+    height: 0px;
+    border: none;
+    width: 100%;
+">
 
-                <th title="Click to edit, right-click to insert variable" class="color-theme label contenteditable" contenteditable="true" style="font-family: Ubuntu; text-align: left; width: 33.6364%;" placeholder="Click to edit!">Product</th>
+                <th title="Click to edit, right-click to insert variable" class="color-theme label contenteditable" contenteditable="true" style="text-align: left;width: 18.2171%;" placeholder="Click to edit!"></th>
+                <th title="Click to edit, right-click to insert variable" class="color-theme label contenteditable" contenteditable="true" style="text-align: left;width: 46.5116%;" placeholder="Click to edit!"></th>
 
 
-                <th title="Click to edit, right-click to insert variable" class="color-theme label contenteditable" contenteditable="true" style="font-family: Ubuntu; text-align: right; width: 12.4793%;" placeholder="Click to edit!">QTY</th>
-
-                <th title="Click to edit, right-click to insert variable" class="color-theme label contenteditable" contenteditable="true" style="font-family: Ubuntu; text-align: right; width: 9.66942%;" placeholder="Click to edit!">Subtotal</th>
+                <th title="Click to edit, right-click to insert variable" class="color-theme label contenteditable" contenteditable="true" style="text-align: left;width: 35.2713%;" placeholder="Click to edit!"></th>
             </tr>
             </thead>
             <tbody>
             <!-- ITEMS HERE -->
             <!--            ##productlist_start##-->
-            <tr class="" style="
-    height: 10px !important;
-">
+            <tr class="style-border-color">
 
-                <td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="left" placeholder="Click to edit!" style="
-    height: 10px !important;
-">{{var items_name}}</td>
-
-
-                <td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="right" placeholder="Click to edit!" style="
-    height: 10px;
-    height: 10px;
-">{{var items_qty}}
+                <td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="center" placeholder="Click to edit!" style="padding: 0.04in;">
+                    {{var items_qty_ordered}}<br>
+                    {{var items_qty_invoiced}}<br>
+                    {{var items_qty_refunded}}
+                </td>
+                <td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="left" placeholder="Click to edit!" style="padding: 0.04in;">{{ var items_FRAGRANCE}}
                 </td>
 
-                <td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="right" placeholder="Click to edit!" style="
-    height: 10px;
-">{{var items_row_total}}</td>
+
+                <td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="left" placeholder="Click to edit!" style="padding: 0.04in;">{{var items_name}}<br>{{var
+                    items_product_options}}
+                </td>
             </tr>
             <!--            ##productlist_end##-->
             </tbody>
-        </table>
 
-
-
-
+        <div class="ui-resizable-handle ui-resizable-e control-ui" style="z-index: 999; height: 83px; position: absolute; top: 0px; right: 0px; width: 10px; cursor: e-resize;"></div></table>
+    </div>
+    <div id="contact-customer" style="height: 0.3in;padding-top: 0.05in;width: 100%;float: left;border-left: 1px solid;">
+    <div style="
+    padding-left: 0.49in;
+    width: 31%;
+    float: left;
+    ]: aliceblue
+">
+        <address contextmenu-type="main" title="Click to edit, right-click to insert variable" contenteditable="true" style="
+">01904 890 336</address>
+    </div>
+    <div style="
+    width: 36%;
+    float: left;
+    ]: aqua
+">
+        <address contextmenu-type="main" title="Click to edit, right-click to insert variable" contenteditable="true" style="
+">www.yorkshiresoap.co.uk</address>
+    </div>
+    <div style="
+    width: 22%;
+    float: left;
+    ]: blanchedalmond
+">
+        <address contextmenu-type="main" title="Click to edit, right-click to insert variable" contenteditable="true" style="
+">online@yorkshiresoap.co.uk</address>
     </div>
 
 </div>
-                </div>
+</div>
+
+</div>
+                                                                        </div>
