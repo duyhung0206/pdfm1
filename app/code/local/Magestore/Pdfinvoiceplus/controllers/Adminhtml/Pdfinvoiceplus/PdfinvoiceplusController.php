@@ -193,6 +193,7 @@ class Magestore_Pdfinvoiceplus_Adminhtml_Pdfinvoiceplus_PdfinvoiceplusController
                 );
             }
         }
+
         /**/
         if ($data = $this->getRequest()->getPost()) {
             if (isset($data['company_logo_delete']) && $data['company_logo_delete']) {
@@ -207,9 +208,9 @@ class Magestore_Pdfinvoiceplus_Adminhtml_Pdfinvoiceplus_PdfinvoiceplusController
                         $uploader->setAllowedExtensions(array('jpg', 'jpeg', 'gif', 'png'));
                         $uploader->setAllowRenameFiles(false);
 
-                        // Set the file upload mode 
+                        // Set the file upload mode
                         // false -> get the file directly in the specified folder
-                        // true -> get the file in the product like folders 
+                        // true -> get the file in the product like folders
                         //    (file.jpg will go in something like /media/f/i/file.jpg)
                         $uploader->setFilesDispersion(true);
 
@@ -295,6 +296,52 @@ class Magestore_Pdfinvoiceplus_Adminhtml_Pdfinvoiceplus_PdfinvoiceplusController
                         return;
                     }
                 }
+
+                if (isset($_FILES['up_design_order']['name']) && $_FILES['up_design_order']['name'] != '') {
+                    try {
+                        /* Starting upload */
+                        $uploader = new Varien_File_Uploader('up_design_order');
+
+                        // Any extention would work
+                        $uploader->setAllowedExtensions(array('txt'));
+                        $uploader->setAllowRenameFiles(false);
+                        $uploader->setFilesDispersion(false);
+                        $explodeString = explode('</style>', file_get_contents($_FILES["up_design_order"]["tmp_name"]));
+                        $contentDesign = '<head>'.$explodeString[0].'</style></head>'.$explodeString[1];
+                        $model->setOrderHtml($contentDesign)->save();
+                        Mage::getSingleton('adminhtml/session')->addSuccess(
+                            Mage::helper('pdfinvoiceplus')->__('Update design order successfully !')
+                        );
+                    } catch (Exception $e) {
+                        Mage::getSingleton('adminhtml/session')->addError(
+                            Mage::helper('pdfinvoiceplus')->__('Error file design order: ') . Mage::helper('pdfinvoiceplus')->__($e->getMessage())
+                        );
+                    }
+                }
+
+                if (isset($_FILES['up_design_invoice']['name']) && $_FILES['up_design_invoice']['name'] != '') {
+                    try {
+                        /* Starting upload */
+                        $uploader = new Varien_File_Uploader('up_design_invoice');
+
+                        // Any extention would work
+                        $uploader->setAllowedExtensions(array('txt'));
+                        $uploader->setAllowRenameFiles(false);
+                        $uploader->setFilesDispersion(false);
+                        $explodeString = explode('</style>', file_get_contents($_FILES["up_design_invoice"]["tmp_name"]));
+                        $contentDesign = '<head>'.$explodeString[0].'</style></head>'.$explodeString[1];
+                        $model->setInvoiceHtml($contentDesign)->save();
+                        Mage::getSingleton('adminhtml/session')->addSuccess(
+                            Mage::helper('pdfinvoiceplus')->__('Update design invoice successfully !')
+                        );
+                    } catch (Exception $e) {
+                        Mage::getSingleton('adminhtml/session')->addError(
+                            Mage::helper('pdfinvoiceplus')->__('Error file design invoice: ') . Mage::helper('pdfinvoiceplus')->__($e->getMessage())
+                        );
+                        $model->setUpDesignOrder($_FILES['up_design_order']['name'])->save();
+                    }
+                }
+
                 /* End change */
                 Mage::getSingleton('adminhtml/session')->addSuccess(
                     Mage::helper('pdfinvoiceplus')->__('The template has been saved successfully.')
