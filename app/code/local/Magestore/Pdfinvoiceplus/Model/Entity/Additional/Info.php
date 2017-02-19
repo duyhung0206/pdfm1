@@ -24,11 +24,17 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Additional_Info extends Magestore_Pd
                     'value' => $order->formatPriceTxt($order->getGrandTotal(), true, false)
                 );
             }
+            if ($key == 'subtotal_incl_tax') {
+                $variables['order_subtotal_incl_tax'] = array(
+                    // 'value' => Mage::helper('core')->currency($order->getShippingAmount())
+                    'value' => $order->formatPriceTxt($order->getData('subtotal_incl_tax'), true, false)
+                );				
+            }
             if ($key == 'shipping_amount') {
                 $variables['order_shipping_amount'] = array(
                     // 'value' => Mage::helper('core')->currency($order->getShippingAmount())
                     'value' => $order->formatPriceTxt($order->getShippingAmount(), true, false)
-                );				
+                );
             }
 			$variables['order_total_qty'] = array(
                     'value' => (int)$totalQty
@@ -99,11 +105,16 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Additional_Info extends Magestore_Pd
         if($invoice){  // Change by Jack 26/12
             $order = $invoice->getOrder();
 			$totalQty=$order->getData('total_qty_ordered');
+
             foreach ($invoice->getData() as $key => $value) {
                     $variables['invoice_' . $key] = array(
                         'value' => $value,
                     );
-
+                    if ($key == 'subtotal_incl_tax') {
+                        $variables['invoice_subtotal_incl_tax'] = array(
+                            'value' => $order->formatPriceTxt($invoice->getData('subtotal_incl_tax'), true, false)
+                        );
+                    }
                     if($key == 'order_id'){
                         $variables['invoice_' . $key] = array(
                         'value' => $order->getIncrementId()
@@ -136,6 +147,12 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Additional_Info extends Magestore_Pd
                             'value' => $order->formatPriceTxt($invoice->getSubtotal(), true, false)
                         );
                     }
+                if ($key == 'subtotal') {
+                    $variables['invoice_subtotal'] = array(
+                        // 'value' => Mage::helper('core')->currency($invoice->getSubtotal())
+                        'value' => $order->formatPriceTxt($invoice->getSubtotal(), true, false)
+                    );
+                }
                     if ($key == 'created_at') {
                         $variables['invoice_created_at'] = array(
                             'value' => Mage::helper('core')->formatDate($invoice->getCreatedAt(), 'short', true)

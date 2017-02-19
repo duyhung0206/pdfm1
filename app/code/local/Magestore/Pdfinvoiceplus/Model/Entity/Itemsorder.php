@@ -173,6 +173,11 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
         $itemSku =implode('<br/>',Mage::helper('catalog')->splitSku($item->getSku()));
         foreach ($items as $key => $value){
             $standardVars['items_'.$key]=array('value'=> $value);
+            if($key =='row_total_incl_tax'){
+                $standardVars['items_row_total_incl_tax'] =array(
+                    'value' => Mage::helper('core')-> currency($value)
+                );
+            }
             if($key =='qty_ordered'){
                 $standardVars['items_qty_ordered'] =array(
                     'value' => $qtyordered

@@ -102,6 +102,14 @@ class Magestore_Pdfinvoiceplus_Block_Adminhtml_Pdfinvoiceplus_Edit_Tab_Insertvar
             'text' => $editOrders->toHtml().' '.$previewOrder->toHtml(),
             'after_element_html' => '<br/>'.Mage::helper('pdfinvoiceplus')->__('Note: Firefox or Google Chrome browser is recommended for the best performance of Design Editor.')
         ));
+        $fieldset->addField('up_design_order', 'file', array(
+            'label' => Mage::helper('pdfinvoiceplus')->__('File design'),
+            'value'  => 'up_design_order',
+            'required' => false,
+            'disabled' => false,
+            'readonly' => true,
+            'name' => 'up_design_order',
+        ));
         /* End Change */
         //end order
         //------------------------------------------------------------------------//
@@ -170,6 +178,15 @@ class Magestore_Pdfinvoiceplus_Block_Adminhtml_Pdfinvoiceplus_Edit_Tab_Insertvar
         $fieldsetinvoice->addField('preview_invoice', 'note', array(
             'text' => $editInvoice->toHtml().' '.$previewInvoice->toHtml(),
             'after_element_html' => '<br/>'.Mage::helper('pdfinvoiceplus')->__('Note: Firefox or Google Chrome browser is recommended for the best performance of Design Editor.')
+        ));
+
+        $fieldsetinvoice->addField('up_design_invoice', 'file', array(
+            'label' => Mage::helper('pdfinvoiceplus')->__('File design'),
+            'value'  => 'up_design_invoice',
+            'required' => false,
+            'disabled' => false,
+            'readonly' => true,
+            'name' => 'up_design_invoice',
         ));
         /* End Change */
         //end invoice
