@@ -38,31 +38,48 @@ class Magestore_Pdfinvoiceplus_IndexController extends Mage_Core_Controller_Fron
         $url_font = Mage::getBaseDir().'/media/magestore/pdfinvoiceplus/fonts/CG.ttf';
         $oImage = imagecreatetruecolor(/*width*/$oW, /*height*/$oH);
         $black = imagecolorallocate($oImage, 74, 69, 63);
-
         imagealphablending($oImage, false);
         $transparent = imagecolorallocatealpha($oImage, 0, 0, 0, 127);
         imagefilledrectangle($oImage, 0, 0, $oW, $oH, $transparent);
         imagesavealpha($oImage, true);
-
         $line_color = imagecolorallocate( $oImage, 0, 0, 0 );
         imagesetthickness ( $oImage, 1 );
-        $giftMessage = Mage::getStoreConfig('pdfinvoiceplus/general/gift_message');
-        $to = 'Joyce';
-        $from = 'Warren & Marcus';
+
+
+        /*get default message*/
+//        $message_default = Mage::getModel('cms/block')->setStoreId(Mage::app()->getStore()->getId())->load('block_pdf_order_global')->getData('content');
+        $message_default = Mage::getStoreConfig('pdfinvoiceplus/general/gift_message');
+        /*get gift message order*/
+        $orderId = Mage::app()->getRequest()->getParam('order_id');
+        if($orderId == '' || $orderId == 'null'){
+            $sender = 'Sender';
+            $recipient = 'Recipient';
+            $message = null;
+        }else{
+
+            $order = Mage::getModel('sales/order')->load($orderId);
+            $gift_message = Mage::getModel('giftmessage/message')->load($order->getGiftMessageId());
+            $sender = $gift_message->getData('sender');
+            $recipient = $gift_message->getData('recipient');
+            $message = $gift_message->getData('message');
+        }
+
+        if($message == null || trim($message) == ''){
+            $giftMessage = $message_default;
+        }else{
+            $giftMessage = $message;
+        }
 
         $font_size = 7*$rate-1;
-        imagettftext($oImage, $font_size, 0, 20*$rate, 22*$rate, $black, $url_font, $to);
-        imagettftext($oImage, $font_size, 0, 238*$rate, 22*$rate, $black, $url_font, $from);
-
-        $giftMessage = wordwrap($giftMessage, 94*$rate, "\n", true);
-        $listmessage = explode("\n", $giftMessage);
+        imagettftext($oImage, $font_size, 0, 20*$rate, 22*$rate, $black, $url_font, $recipient);
+        imagettftext($oImage, $font_size, 0, 238*$rate, 22*$rate, $black, $url_font, $sender);
         $topmessage = 42*$rate;
+        $giftMessage = wordwrap($giftMessage, 94, "\n", true);
+        $listmessage = explode("\n", $giftMessage);
         foreach ($listmessage as $message){
             imagettftext($oImage, $font_size, 0, 0, $topmessage, $black, $url_font, $message);
             $topmessage+=18*$rate;
         }
-
-
         $rotation = imagerotate($oImage, 180, 0);
         imagealphablending($rotation, false);
         imagesavealpha($rotation, true);
