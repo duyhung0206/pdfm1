@@ -422,6 +422,9 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Additional_Info extends Magestore_Pd
         } else {
             $shippingInfo = '';
         }
+        $billingInfo = Mage::helper('pdfinvoiceplus')->handleStringAddress($billingInfo);
+        $shippingInfo = Mage::helper('pdfinvoiceplus')->handleStringAddress($shippingInfo);
+
         $variables = array(
             $type.'_billing_address' => array(
                 'value' => $billingInfo,

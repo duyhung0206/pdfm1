@@ -168,6 +168,8 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Pdfgenerator extends Magestore_Pdfin
         $result = Mage::helper('pdfinvoiceplus/items')
                 ->getTheItemsFromBetwin($templateToProcessForItems,self::THE_START, self::THE_END);
         $i = 1;
+//        Zend_Debug::dump($itemsData);
+//        die();
         foreach ($itemsData as $templateVars)
         {
             $itemPosition = array('items_position' => $i++);
@@ -178,6 +180,14 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Pdfgenerator extends Magestore_Pdfin
             if($i%2==0){
                 $itemProcess = str_replace('<tr>','<tr class="items-tr">',$itemProcess);
             }
+            $itemProcess .= '--><tr class="style-border-color" style="border: none;">
+   <td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="left" placeholder="Click to edit!" style="font-size: 10px; background-color: #ffffff;"></td>
+   <td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="left" placeholder="Click to edit!" style="font-size: 10px; background-color: #ffffff;">Discount</td>
+   <td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="right" placeholder="Click to edit!" style="font-size: 10px; background-color: #ffffff;"></td>
+   <td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="right" placeholder="Click to edit!" style="font-size: 10px; background-color: #ffffff;"></td>
+   <td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="right" placeholder="Click to edit!" style="font-size: 10px; background-color: #ffffff;"></td>
+   <td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="right" placeholder="Click to edit!" style="font-size: 10px; background-color: #ffffff;">'.$templateVars['items_discount_amount'].'</td>
+</tr>'.'<!--<br>';
             $finalItems .= $itemProcess . '<br>';
         }
         $templateWithItemsProcessed = str_replace($result, $finalItems, $templateToProcessForItems);
@@ -195,6 +205,8 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Pdfgenerator extends Magestore_Pdfin
      */
     public function mainVariableProcess()
     {
+//        Zend_Debug::dump($this->getTheInvoice()->getData());
+//        die('hades');
         $templateText = $this->getTheTemplateBodyWithItems();
         //auto insert totals
         $total_invoice = Mage::getModel('pdfinvoiceplus/entity_totalsRender_invoice');
@@ -261,6 +273,7 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Pdfgenerator extends Magestore_Pdfin
 
             $mailPdf->setData('htmltemplate', $templateBody);
             $output = $pdf->Output($this->getFileName(), 'S');
+            $output = $pdf->Output($this->getFileName(), 'I');
             $mailPdf->setData('pdfbody', $output);
             $mailPdf->setData('filename', $this->getFileName());
         }

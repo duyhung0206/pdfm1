@@ -163,6 +163,7 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
 //        $qtyrefunded = (int) $items['qty_refunded'];
         if($item->getQtyOrdered()!= 0){
             $qtyordered ='Ordered: '.(int)$item->getQtyOrdered();
+            $qtyordered =''.(int)$item->getQtyOrdered();
         }
         if($item->getQtyInvoiced()!= 0){
             $qtyinvoiced ='Invoiced: '.(int)$item->getQtyInvoiced();
@@ -245,7 +246,7 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
                 ); 
             }
         }
-         //zend_debug::dump($standardVars); die('vao invoice items');
+//         zend_debug::dump($standardVars); die('vao invoice items');
         return $standardVars;
     }
 
