@@ -1,18 +1,18 @@
 <?php
 /**
  * Magestore
- *
+ * 
  * NOTICE OF LICENSE
- *
+ * 
  * This source file is subject to the Magestore.com license that is
  * available through the world-wide-web at this URL:
  * http://www.magestore.com/license-agreement.html
- *
+ * 
  * DISCLAIMER
- *
+ * 
  * Do not edit or add to this file if you wish to upgrade this extension to newer
  * version in the future.
- *
+ * 
  * @category    Magestore
  * @package     Magestore_Pdfinvoiceplus
  * @copyright   Copyright (c) 2012 Magestore (http://www.magestore.com/)
@@ -21,7 +21,7 @@
 
 /**
  * Pdfinvoiceplus Helper
- *
+ * 
  * @category    Magestore
  * @package     Magestore_Pdfinvoiceplus
  * @author      Magestore Developer
@@ -30,7 +30,29 @@ class Magestore_Pdfinvoiceplus_Helper_Data extends Mage_Core_Helper_Abstract
 {
     public function getRotatedImage($orderId = null)
     {
-        $rate = 20;
+        /*get default message*/
+       // $message_default = Mage::getModel('cms/block')->setStoreId(Mage::app()->getStore()->getId())->load('block_pdf_order_global')->getData('content');
+        $message_default = Mage::getStoreConfig('pdfinvoiceplus/general/gift_message');
+        /*get gift message order*/
+        if($orderId == null){
+            $orderId = Mage::app()->getRequest()->getParam('order_id');
+        }
+
+        $order = Mage::getModel('sales/order')->load($orderId);
+        $gift_message = Mage::getModel('giftmessage/message')->load($order->getGiftMessageId());
+        $sender = $gift_message->getData('sender');
+        $recipient = $gift_message->getData('recipient');
+        $message = $gift_message->getData('message');
+
+        if($message == null || trim($message) == ''){
+            $giftMessage = $message_default;
+            $recipient = $order->getData('customer_firstname').' '.$order->getData('customer_lastname');
+            $sender = 'Warren & Marcus';
+        }else{
+            $giftMessage = $message;
+        }
+
+        $rate = 3.7;
         $oW = 393.6*$rate;
         $oH = 288*$rate;
         $url_font = Mage::getBaseDir().'/media/magestore/pdfinvoiceplus/fonts/CG.ttf';
@@ -40,37 +62,7 @@ class Magestore_Pdfinvoiceplus_Helper_Data extends Mage_Core_Helper_Abstract
         $transparent = imagecolorallocatealpha($oImage, 0, 0, 0, 127);
         imagefilledrectangle($oImage, 0, 0, $oW, $oH, $transparent);
         imagesavealpha($oImage, true);
-        $line_color = imagecolorallocate( $oImage, 0, 0, 0 );
         imagesetthickness ( $oImage, 1 );
-
-
-        /*get default message*/
-//        $message_default = Mage::getModel('cms/block')->setStoreId(Mage::app()->getStore()->getId())->load('block_pdf_order_global')->getData('content');
-        $message_default = Mage::getStoreConfig('pdfinvoiceplus/general/gift_message');
-        /*get gift message order*/
-        if($orderId == null){
-            $orderId = Mage::app()->getRequest()->getParam('order_id');
-        }
-
-        if($orderId == '' || $orderId == null){
-            $sender = 'Sender';
-            $recipient = 'Recipient';
-            $message = null;
-        }else{
-            $order = Mage::getModel('sales/order')->load($orderId);
-            $gift_message = Mage::getModel('giftmessage/message')->load($order->getGiftMessageId());
-            $sender = $gift_message->getData('sender');
-            $recipient = $gift_message->getData('recipient');
-            $message = $gift_message->getData('message');
-        }
-
-        if($message == null || trim($message) == ''){
-            $giftMessage = $message_default;
-            $sender = 'Sender';
-            $recipient = 'Recipient';
-        }else{
-            $giftMessage = $message;
-        }
         $font_size = 7*$rate-1;
         imagettftext($oImage, $font_size, 0, 20*$rate, 22*$rate, $black, $url_font, $recipient);
         imagettftext($oImage, $font_size, 0, 238*$rate, 22*$rate, $black, $url_font, $sender);
@@ -87,15 +79,19 @@ class Magestore_Pdfinvoiceplus_Helper_Data extends Mage_Core_Helper_Abstract
         $rotation = imagerotate($oImage, 180, 0);
         imagealphablending($rotation, false);
         imagesavealpha($rotation, true);
-        //header("Content-type: image/png");
+        imagedestroy($oImage);
+        
+        imagecolordeallocate($black);
+        imagecolordeallocate($transparent);
         ob_start();
         imagepng($rotation);
-        imagedestroy($oImage);
+        
+        $data = ob_get_contents();
+        ob_get_clean();
         imagedestroy($rotation);
-        $data = ob_get_clean();
         return 'data:image/png;base64,' . base64_encode($data);
     }
-    
+
     public function handleStringAddress($string){
         $arraySI = explode('<br/>', $string);
         $telephone = '';
@@ -128,10 +124,10 @@ class Magestore_Pdfinvoiceplus_Helper_Data extends Mage_Core_Helper_Abstract
         $messege = Mage::helper('pdfinvoiceplus')->__('You do not have a template selected for this invoice. You will get the default Magento Invoice');
         return $location =$this->getCustomPrintUrl($type, $orderId) ;
     }
-
+    
     public function getCustomPrintUrl($type,$orderId)
     {
-        //$orderId =231;
+        //$orderId =231;  
         if($type == 'order')
             return Mage::helper('adminhtml')->getUrl('adminhtml/pdfinvoiceplus_order/print', array(
                         'order_id' => $orderId
@@ -168,7 +164,7 @@ class Magestore_Pdfinvoiceplus_Helper_Data extends Mage_Core_Helper_Abstract
         }
         return $varsData;
     }
-
+    
      public function getAsVariable($varialble = array())
     {
         $data = array();
@@ -192,9 +188,9 @@ class Magestore_Pdfinvoiceplus_Helper_Data extends Mage_Core_Helper_Abstract
     }
 
     /**
-     *
+     * 
      * @param string $templateText
-     * @return Core_Model_Email_Template Object
+     * @return Core_Model_Email_Template Object 
      */
     public function setTheTemplateLayout($templateText)
     {
@@ -204,21 +200,21 @@ class Magestore_Pdfinvoiceplus_Helper_Data extends Mage_Core_Helper_Abstract
 
         return $pdfProcessTemplate;
     }
-
+    
     public function arrayToStandard($variable = array())
     {
         foreach ($variable as $key => $var)
         {
-            $variables[] = array($key => $var);
+            $variables[] = array($key => $var); 
         }
         return $variables;
     }
-
+    
     public function checkEnable(){
         $config = Mage::getStoreConfig('pdfinvoiceplus/general/enable');
         return $config;
     }
-
+    
      public function checkStoreTemplate() {
         $order = Mage::helper('pdfinvoiceplus/pdf')->getOrder();
         $collection = Mage::getModel('pdfinvoiceplus/template')->getCollection()
@@ -247,12 +243,12 @@ class Magestore_Pdfinvoiceplus_Helper_Data extends Mage_Core_Helper_Abstract
             return true;
         return false;
     }
-
+        
     public function splitString($str, $length){
         $array = str_split($str, $length);
         return $array;
     }
-
+    
     public function getImageViewUrl(){
         $model = Mage::registry('pdfinvoiceplus_data');
         if($model->getId()){
@@ -264,7 +260,7 @@ class Magestore_Pdfinvoiceplus_Helper_Data extends Mage_Core_Helper_Abstract
             return '';
         }
     }
-
+    
     public function getTemplateName(){
         $model = Mage::registry('pdfinvoiceplus_data');
         if($model->getId()){
@@ -275,7 +271,7 @@ class Magestore_Pdfinvoiceplus_Helper_Data extends Mage_Core_Helper_Abstract
             return '';
         }
     }
-
+    
     /**
      * check template are using is A6, A7 or no
      * @return boolean

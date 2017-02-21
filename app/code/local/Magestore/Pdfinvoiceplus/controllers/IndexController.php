@@ -28,11 +28,17 @@
  */
 class Magestore_Pdfinvoiceplus_IndexController extends Mage_Core_Controller_Front_Action
 {
-    /**
-     * index action
-     */
+
+	public function testAction(){
+		$orderId = 4418;
+		$order = Mage::getModel('sales/order')->load($orderId);
+		Zend_debug::dump($order->getData());
+		die();
+	}
+
     public function imagedesignAction(){
-        $rate = 10;
+        /*create image in edit design*/
+        $rate = 5;
         $oW = 393.6*$rate;
         $oH = 288*$rate;
         $url_font = Mage::getBaseDir().'/media/magestore/pdfinvoiceplus/fonts/CG.ttf';
@@ -45,30 +51,11 @@ class Magestore_Pdfinvoiceplus_IndexController extends Mage_Core_Controller_Fron
         $line_color = imagecolorallocate( $oImage, 0, 0, 0 );
         imagesetthickness ( $oImage, 1 );
 
-
-        /*get default message*/
-//        $message_default = Mage::getModel('cms/block')->setStoreId(Mage::app()->getStore()->getId())->load('block_pdf_order_global')->getData('content');
+        $sender = 'Customer';
+        $recipient = 'Warren & Marcus';
         $message_default = Mage::getStoreConfig('pdfinvoiceplus/general/gift_message');
-        /*get gift message order*/
-        $orderId = Mage::app()->getRequest()->getParam('order_id');
-        if($orderId == '' || $orderId == 'null'){
-            $sender = 'Sender';
-            $recipient = 'Recipient';
-            $message = null;
-        }else{
-
-            $order = Mage::getModel('sales/order')->load($orderId);
-            $gift_message = Mage::getModel('giftmessage/message')->load($order->getGiftMessageId());
-            $sender = $gift_message->getData('sender');
-            $recipient = $gift_message->getData('recipient');
-            $message = $gift_message->getData('message');
-        }
-
-        if($message == null || trim($message) == ''){
-            $giftMessage = $message_default;
-        }else{
-            $giftMessage = $message;
-        }
+        
+        $giftMessage = $message_default;
 
         $font_size = 7*$rate-1;
         imagettftext($oImage, $font_size, 0, 20*$rate, 22*$rate, $black, $url_font, $recipient);
@@ -89,7 +76,9 @@ class Magestore_Pdfinvoiceplus_IndexController extends Mage_Core_Controller_Fron
         imagedestroy($rotation);
         exit;
     }
-
+    /**
+     * index action
+     */
     public function indexAction()
     {
         $this->loadLayout();

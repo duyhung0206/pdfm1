@@ -32,7 +32,7 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator extends Magestore_Pdf
     {
         return $this->_sourceId;
     }
-    public function setPdfCollection()
+     public function setPdfCollection()
     {
         $this->pdfCollection = Mage::getModel('pdfinvoiceplus/template')->getCollection();
         return $this;
@@ -69,7 +69,7 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator extends Magestore_Pdf
 //                        ->addFieldToFilter('status', 1);
 ////                        ->addFieldToFilter('template_store_id', $this->getTheStoreId());
 //            }
-
+            
         } catch (Exception $e) {
             Mage::log($e->getMessage());
             return null;
@@ -109,13 +109,13 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator extends Magestore_Pdf
         }
         return 'order - ';
     }
-    public function getBody()
+     public function getBody()
     {
 
         if ($body = $this->createTemplate()->getData('order_html'))
         {
             return $body;
-
+            
         }
         return false;
     }
@@ -127,15 +127,15 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator extends Magestore_Pdf
     public function getTheTemplateBodyWithItems()
     {
         $templateToProcessForItems = $this->getBody();
-        /* Change by Zeus 08/12 */
+          /* Change by Zeus 08/12 */
         $finalItems = NULL;
         /* End change */
         $items = Mage::getModel('pdfinvoiceplus/entity_itemsorder')
-            ->setSource($this->getTheOrder())->setOrder($this->getTheOrder());
+                        ->setSource($this->getTheOrder())->setOrder($this->getTheOrder());
         $itemsData = $items->processAllVars();
-
+        
         $result = Mage::helper('pdfinvoiceplus/items')
-            ->getTheItemsFromBetwin($templateToProcessForItems,self::THE_START, self::THE_END);
+                ->getTheItemsFromBetwin($templateToProcessForItems,self::THE_START, self::THE_END);
         $i = 1;
         foreach ($itemsData as $templateVars)
         {
@@ -169,7 +169,7 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator extends Magestore_Pdf
         $total_order->setSource($this->getTheOrder())
             ->setHtml($templateText)->setTemplateId($this->createTemplate()->getId());
         $templateText = $total_order->renderHtml();
-
+        
         $theVariableProcessor = Mage::helper('pdfinvoiceplus')->setTheTemplateLayout($templateText);
         return $theVariableProcessor;
     }
@@ -214,34 +214,48 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator extends Magestore_Pdf
     }
 
     public function getPdf($html = '') {
+        $template = Mage::helper('pdfinvoiceplus/pdf')->getUsingTemplate();
+        $storeId = Mage::app()->getStore()->getStoreId();
+        $backgroundOn = Mage::getStoreConfig('pdfinvoiceplus/general/switchbg',$storeId);
+        $choosetemplate = Mage::getStoreConfig('pdfinvoiceplus/general/choosedesign',$storeId);
+        $templateBody = $this->getTheProcessedTemplate();
+//        echo $templateBody;
+//        die();
+
         $isMassPDF = $this->isMassPDF();
         $mailPdf = new Varien_Object;
         if($isMassPDF){
             $templateBody = $this->getTheProcessedTemplate();
-//            $orderIds = Mage::app()->getRequest()->getPost('order_ids');
-//            $templateBodyFinal = '';
-//            $templateBodyss = explode("http://yorkshiresoap.labelmediadev.co.uk/index.php/pdfinvoiceplus/index/imagedesign",$templateBody);
-//            foreach ($templateBodyss as $key => $itemtemplate){
-//                $templateBodyFinal.= $itemtemplate. $this->getRotatedImage($orderIds[$key]);
-//            }
-            $templateBody = str_replace("http://yorkshiresoap.labelmediadev.co.uk/media/gift-reciept-06-01_1_.png",'http://i.imgur.com/9wyH2M4.png',$templateBody);
-
+            if($template->getData('template_id') == $choosetemplate){
+                if($backgroundOn == 1){
+                    $templateBody = str_replace("/media/bg.jpg",'./media/bg.jpg',$templateBody);
+                }else{
+                    $templateBody = str_replace("background: url(/media/bg.jpg)",'background: transparent;background-color: transparent;',$templateBody);
+                }
+                
+            }
+            
             $mailPdf->setData('htmltemplate', $templateBody);
             $mailPdf->setData('filename', $this->getFileName());
         }
         else{
             $pdf = $this->loadPdf();
+
             $templateBody = $this->getTheProcessedTemplate();
-            //echo htmlentities($templateBody);
-            $templateBody = str_replace("http://yorkshiresoap.labelmediadev.co.uk/index.php/pdfinvoiceplus/index/imagedesign",Mage::helper('pdfinvoiceplus')->getRotatedImage(),$templateBody);
-            $templateBody = str_replace("http://yorkshiresoap.labelmediadev.co.uk/media/gift-reciept-06-01_1_.png",'http://i.imgur.com/9wyH2M4.png',$templateBody);
-            //die();
+            if($template->getData('template_id') == $choosetemplate){
+                $templateBody = str_replace("/pdfinvoiceplus/index/imagedesign",Mage::helper('pdfinvoiceplus')->getRotatedImage(),$templateBody);
+                if($backgroundOn == 1){
+                    $templateBody = str_replace("/media/bg.jpg",'./media/bg.jpg',$templateBody);
+                }else{
+                    $templateBody = str_replace("background: url(/media/bg.jpg)",'background: transparent;background-color: transparent;',$templateBody);
+                }
+            }
             $pdf->WriteHTML($this->getCss(), 1);
             $pdf->WriteHTML($templateBody);
 
             $mailPdf->setData('htmltemplate', $templateBody);
             $output = $pdf->Output($this->getFileName(), 'S');
-//            $output = $pdf->Output($this->getFileName(), 'I');
+             $output = $pdf->Output($this->getFileName(), 'I');
             $mailPdf->setData('pdfbody', $output);
             $mailPdf->setData('filename', $this->getFileName());
         }
@@ -257,28 +271,29 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator extends Magestore_Pdf
 
     public function loadPdf() {
         $template = Mage::helper('pdfinvoiceplus/pdf')->getUsingTemplate();
-        if($template->getData('template_id') == 2){
-            $top = '0';
-        }else{
-            $top = '5';
-        }
+        $storeId = Mage::app()->getStore()->getStoreId();
+        $choosetemplate = Mage::getStoreConfig('pdfinvoiceplus/general/choosedesign',$storeId);
+
         $bottom = '0';
         $left = '0';
         $right = '0';
-        $orientation = $this->getOrientation();
-        if($template->getData('template_id') == 2){
+        if($template->getData('template_id') == $choosetemplate){
+            $top = '0';
             $pdf = new Mpdf_Magestorepdf('', 'A5', 8, '', $left, $right, $top, $bottom);
         }else{
+            $top = '5';
             $pdf = new Mpdf_Magestorepdf('', $this->pdfPaperFormat(), 8, '', $left, $right, $top, $bottom);
         }
+        
+        $orientation = $this->getOrientation();
         $pdf->AddPage($orientation);
         //Change by Jack 29/12 - add page number
-        $storeId = Mage::app()->getStore()->getStoreId();
-        $isEnablePageNumbering = Mage::getStoreConfig('pdfinvoiceplus/general/page_numbering',$storeId);
-        if($isEnablePageNumbering)
+
+            $isEnablePageNumbering = Mage::getStoreConfig('pdfinvoiceplus/general/page_numbering',$storeId);
             if($isEnablePageNumbering)
+               if($isEnablePageNumbering)
                 $pdf->SetHTMLFooter('<div style = "float:right;z-index:16000 !important; width:30px;">{PAGENO}/{nb}</div>');
-        // End Change
+        // End Change  
         return $pdf;
     }
 }

@@ -1,13 +1,13 @@
+<div id="container-html" style="margin-top: 50px;position: relative;">
 
-            
-            
-            
-            
-            
-            
-            
-            
-            
+
+
+
+
+
+
+
+
 	<style>
 		* {
 		margin: 0;
@@ -412,8 +412,8 @@
 				height: 7in;
 				max-height: 7in;
 				">
-				
-				<table id="table-item" class="items table-data relative ui-resizable CRZ" width="100%" style="border-collapse: collapse;font-size: 10px;height: 6.5in;max-height: 6.5in;" cellpadding="6">
+
+				<div class="CRC control-ui" id="table-item-CRC" style="width: 516px; margin-top: 0px;"><div class="CRG" style="left: 97px; height: 624px;"><div class="CRZ" style="cursor:e-resize"></div><div class="table-item-remove-col-ui mytable-remove-col control-ui"></div></div><div class="CRG" style="left: 322px; height: 624px;"><div class="CRZ" style="cursor:e-resize"></div><div class="table-item-remove-col-ui mytable-remove-col control-ui"></div></div><div class="CRL" style="left: 517px; height: 624px;"><div class="table-item-remove-col-ui mytable-remove-col control-ui"></div></div><div class="table-item-add-col-ui mytable-add-col control-ui" style="z-index: 1999"></div></div><table id="table-item" class="items table-data relative ui-resizable CRZ" width="100%" style="border-collapse: collapse;font-size: 10px;height: 6.5in;max-height: 6.5in;" cellpadding="6">
 					<thead>
 						<tr style="
 							height: 0px;
@@ -438,8 +438,8 @@
 						</tr>
 						<!--            ##productlist_end##-->
 					</tbody>
-					
-				</table>
+
+				<div class="ui-resizable-handle ui-resizable-e control-ui" style="z-index: 999; height: 624px; position: absolute; top: 0px; right: 0px; width: 10px; cursor: e-resize;"></div></table>
 			</div>
 			<div id="contact-customer" style="height: 0.3in;padding-top: 0.05in;width: 100%;float: left;">
 				<div style="
@@ -467,4 +467,4 @@
 			</div>
 		</div>
 	</div>
-                                                                        
+                                                                        </div>

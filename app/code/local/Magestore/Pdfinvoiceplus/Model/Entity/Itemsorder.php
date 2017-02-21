@@ -63,40 +63,100 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
      */
     public function getTheItems()
     {
-        foreach ($this->getSource()->getAllItems() as $item)
-        {
-            $this->setItem($item);
-            if ($item->getParentItem())
+        $template = Mage::helper('pdfinvoiceplus/pdf')->getUsingTemplate();
+        $storeId = Mage::app()->getStore()->getStoreId();
+        $choosetemplate = Mage::getStoreConfig('pdfinvoiceplus/general/choosedesign',$storeId);
+        if($template->getData('template_id') == $choosetemplate){
+            $maxSizeRow = 6.5;
+            $sizeOneLine = 0.104166667;
+            $spaceInLine = 0.02;
+            $spaceInRow = 0.104166667;
+            $sizeRow = 0;
+            foreach ($this->getSource()->getAllItems() as $item)
             {
-                $theParent = $item->getParentItem();
-                if (Mage::helper('pdfinvoiceplus/product')->isConfigurable($theParent->getProductId()))
+
+                $this->setItem($item);
+                if ($item->getParentItem())
                 {
-                    continue;
+                    $theParent = $item->getParentItem();
+                    if (Mage::helper('pdfinvoiceplus/product')->isConfigurable($theParent->getProductId()))
+                    {
+                        continue;
+                    }
+                    $isChild = true;
+                } else
+                {
+                    $isChild = false;
                 }
-                $isChild = true;
-            } else
-            {
-                $isChild = false;
-            }
-             
-            $imageData = Mage::helper('pdfinvoiceplus/product')->getTheProductImage($item->getProductId());
-            if($item->isChildrenCalculated())
-                $itemsPriceData = $this->isPriceDisplayOptions($item);
-            else
-                $itemsPriceData = array();
-            $userAttributeData = Mage::helper('pdfinvoiceplus/product')->getDataAsVar(
+
+                $imageData = Mage::helper('pdfinvoiceplus/product')->getTheProductImage($item->getProductId());
+                if($item->isChildrenCalculated())
+                    $itemsPriceData = $this->isPriceDisplayOptions($item);
+                else
+                    $itemsPriceData = array();
+                $userAttributeData = Mage::helper('pdfinvoiceplus/product')->getDataAsVar(
                     $item->getProductId(), $this->getOrder()->getStoreId(), $isChild);
 
-            $standardVars = $this->getSandardItemVars($item);
-            $productioptions = $this->getItemOptions();
-            if (isset($productioptions))
-            {
-                $attr[] = array_merge($itemsPriceData, $userAttributeData, $standardVars, $productioptions, $imageData);
-            } else
-            {
-                $attr[] = array_merge($itemsPriceData, $userAttributeData, $standardVars, $imageData);
+                $standardVars = $this->getSandardItemVars($item);
+                $wordwrap3 = wordwrap($standardVars['items_tagline']['value'], 36, "\n", true);
+                $wordwrap2 = wordwrap($standardVars['items_fragrance']['value'], 39, "\n", true);
+                $wordwrap21 = wordwrap($standardVars['items_name']['value'], 39, "\n", true);
+                $rowC21 = substr_count($wordwrap21, "\n") + 1;
+                $rowC2 = substr_count($wordwrap2, "\n") + 1;
+                $rowC3 = substr_count($wordwrap3, "\n") + 1;
+                $row = max( $rowC2, $rowC3, $rowC21);
+                $sizeRow += $row * $sizeOneLine + ($row-1) * $spaceInLine + $spaceInRow;
+                if($sizeRow >= $maxSizeRow)
+                    break;
+                $productioptions = $this->getItemOptions();
+                if (isset($productioptions))
+                {
+                    $attr[] = array_merge($itemsPriceData, $userAttributeData, $standardVars, $productioptions, $imageData);
+                } else
+                {
+                    $attr[] = array_merge($itemsPriceData, $userAttributeData, $standardVars, $imageData);
+                }
+                //}
             }
-            //}
+        }else{
+
+            foreach ($this->getSource()->getAllItems() as $item)
+            {
+
+                $this->setItem($item);
+                if ($item->getParentItem())
+                {
+                    $theParent = $item->getParentItem();
+                    if (Mage::helper('pdfinvoiceplus/product')->isConfigurable($theParent->getProductId()))
+                    {
+                        continue;
+                    }
+                    $isChild = true;
+                } else
+                {
+                    $isChild = false;
+                }
+
+                $imageData = Mage::helper('pdfinvoiceplus/product')->getTheProductImage($item->getProductId());
+                if($item->isChildrenCalculated())
+                    $itemsPriceData = $this->isPriceDisplayOptions($item);
+                else
+                    $itemsPriceData = array();
+                $userAttributeData = Mage::helper('pdfinvoiceplus/product')->getDataAsVar(
+                    $item->getProductId(), $this->getOrder()->getStoreId(), $isChild);
+
+                $standardVars = $this->getSandardItemVars($item);
+
+                $productioptions = $this->getItemOptions();
+                if (isset($productioptions))
+                {
+                    $attr[] = array_merge($itemsPriceData, $userAttributeData, $standardVars, $productioptions, $imageData);
+                } else
+                {
+                    $attr[] = array_merge($itemsPriceData, $userAttributeData, $standardVars, $imageData);
+                }
+                //}
+            }
         }
         return $attr;
     }
@@ -241,13 +301,27 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
                 ); 
             }
         }
+//        $product_id = $item->getProductId();
+//        $product = Mage::getModel('catalog/product')->load($product_id);
+//        $listFragrance = $product->getAttributeText('fragrance');
+//        $standardVars['items_fragrance'] =array(
+//            'value' => implode(" - ",$listFragrance)
+//        );
+//
+//        $standardVars['items_tagline'] =array(
+//            'value' => $product->getData('tagline')
+//        );
 
-        $product_id = $item->getProductId();
-        $product = Mage::getModel('catalog/product')->load($product_id);
         $standardVars['items_fragrance'] =array(
-            'value' => $product->getFragrance()
+            'value' => 'Strawberry & Poppyseed (6)'
         );
-         //zend_debug::dump($standardVars); die('vao invoice items');
+
+        $standardVars['items_tagline'] =array(
+            'value' => 'Bath Truffle Gift Box (6)'
+        );
+//        $standardVars['items_tagline'] =array(
+//            'value' => 'Bath Truffle Gift Box (6)'
+//        );
         return $standardVars;
     }
 

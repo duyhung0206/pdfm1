@@ -56,6 +56,26 @@
                             <show_in_store>1</show_in_store>
                             <comment></comment>
                         </enable>
+                        <choosedesign translate="label">
+                            <label>Choose template design giftmessage</label>
+                            <frontend_type>select</frontend_type>
+                            <sort_order>2</sort_order>
+                            <source_model>pdfinvoiceplus/choosedesign</source_model>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment>Choose template that design in ticket #31079)</comment>
+                        </choosedesign>
+                        <switchbg translate="label">
+                            <label>Background ON/OFF</label>
+                            <frontend_type>select</frontend_type>
+                            <sort_order>3</sort_order>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment>Choose yes to set background for template (only template has id: 3)</comment>
+                        </switchbg>
                         <use_multistore translate="label">
                             <label>Use for multi-stores</label>
                             <frontend_type>select</frontend_type>

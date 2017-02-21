@@ -33,129 +33,9 @@ class Magestore_Pdfinvoiceplus_TestController extends Mage_Core_Controller_Front
      * index action
      */
     public function indexAction() {
-        //$mpdf = new mPDF();
-        $top = '0';
-        $bottom = '0';
-        $left = '0';
-        $right = '0';
-        //$orientation = $this->getOrientation();
-        $mpdf = new Mpdf_Magestorepdf('', 'A4', 8, '', $left, $right, $top, $bottom);
-        $html = '
-<html>
-<head>
-<style>
-@page chapter2{
-    size: auto;
-    odd-header-name: html_MyHeader2;
-    odd-footer-name: html_MyFooter2;
-}
-
-</style>
-</head>
-<body>
-
-<div>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-<p>Text of Chapter 2 Thìn</p>
-
-</div>
-
-
-<htmlpagefooter name="MyFooter2">
-    <h1 style="background-color:red;position:relative;">page 2 222 {PAGENO}/{nbpg}</h1>
-</htmlpagefooter>
-
-<sethtmlpagefooter name="MyFooter2" value="on" show-this-page="{nbpg}" />
-</body></html>
-';
-        
-        $mpdf->WriteHTML($html);
-
-        $mpdf->Output();
+        $product = Mage::getModel('catalog/product')->load(336);
+        Zend_debug::dump($product->getData());
+        die();
     }
 
     public function allVarsAction() {
@@ -175,7 +55,7 @@ class Magestore_Pdfinvoiceplus_TestController extends Mage_Core_Controller_Front
                 'customer' => $helper->getCustomerVars(),
                 'creditmemo' => $helper->getCreditmemoVars(),
                 'creditmemo_item' => $helper->getCreditmemoItemVars()
-            )
+            ),
 			'shipment' => array(
                 'customer' => $helper->getCustomerVars(),
                 'shipment' => $helper->getShipmentVars(),

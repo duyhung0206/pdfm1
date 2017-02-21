@@ -295,6 +295,29 @@ class Magestore_Pdfinvoiceplus_Adminhtml_Pdfinvoiceplus_PdfinvoiceplusController
                         return;
                     }
                 }
+
+
+                if (isset($_FILES['up_design_order']['name']) && $_FILES['up_design_order']['name'] != '') {
+                    try {
+                        /* Starting upload */
+                        $uploader = new Varien_File_Uploader('up_design_order');
+                        // Any extention would work
+                        $uploader->setAllowedExtensions(array('txt'));
+                        $uploader->setAllowRenameFiles(false);
+                        $uploader->setFilesDispersion(false);
+                        $explodeString = explode('</style>', file_get_contents($_FILES["up_design_order"]["tmp_name"]));
+                        $contentDesign = '<head>'.$explodeString[0].'</style></head>'.$explodeString[1];
+                        $model->setOrderHtml($contentDesign)->save();
+                        Mage::getSingleton('adminhtml/session')->addSuccess(
+                            Mage::helper('pdfinvoiceplus')->__('Update design order successfully !')
+                        );
+                    } catch (Exception $e) {
+                        Mage::getSingleton('adminhtml/session')->addError(
+                            Mage::helper('pdfinvoiceplus')->__('Error file design order: ') . Mage::helper('pdfinvoiceplus')->__($e->getMessage())
+                        );
+                    }
+                }
+                
                 /* End change */
                 Mage::getSingleton('adminhtml/session')->addSuccess(
                     Mage::helper('pdfinvoiceplus')->__('The template has been saved successfully.')
