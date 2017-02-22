@@ -68,13 +68,18 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
         $choosetemplate = Mage::getStoreConfig('pdfinvoiceplus/general/choosedesign',$storeId);
         if($template->getData('template_id') == $choosetemplate){
             $maxSizeRow = 6.5;
+//            $maxSizeRow = 1;
             $sizeOneLine = 0.104166667;
             $spaceInLine = 0.02;
             $spaceInRow = 0.104166667;
             $sizeRow = 0;
-            foreach ($this->getSource()->getAllItems() as $item)
+            $arrayItems = array();
+            $items = $this->getSource()->getAllItems();
+            $items = array_merge($items,$items);
+            $items = array_merge($items,$items);
+            $items = array_merge($items,$items);
+            foreach ($items as $key => $item)
             {
-
                 $this->setItem($item);
                 if ($item->getParentItem())
                 {
@@ -106,8 +111,7 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
                 $rowC3 = substr_count($wordwrap3, "\n") + 1;
                 $row = max( $rowC2, $rowC3, $rowC21);
                 $sizeRow += $row * $sizeOneLine + ($row-1) * $spaceInLine + $spaceInRow;
-                if($sizeRow >= $maxSizeRow)
-                    break;
+
                 $productioptions = $this->getItemOptions();
                 if (isset($productioptions))
                 {
@@ -116,8 +120,14 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
                 {
                     $attr[] = array_merge($itemsPriceData, $userAttributeData, $standardVars, $imageData);
                 }
+                if($sizeRow >= $maxSizeRow){
+                    $arrayItems[] = count($attr);
+                    $sizeRow = 0;
+                }
                 //}
             }
+
+            Mage::getSingleton('core/session')->setArrayItems($arrayItems);
         }else{
 
             foreach ($this->getSource()->getAllItems() as $item)
@@ -317,7 +327,7 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
         );
 
         $standardVars['items_tagline'] =array(
-            'value' => 'Bath Truffle Gift Box (6)'
+            'value' => 'Bath Truffle Gift Box (6) Bath Truffle Gift Box (6) Box (6) Bath Truffle Gift Box (6) Box (6) Bath Truffle Gift Box (6) Box (6) Bath Truffle Gift Box (6) Box (6) Bath Truffle Gift Box (6) Box (6) Bath Truffle Gift Box (6)  '
         );
 //        $standardVars['items_tagline'] =array(
 //            'value' => 'Bath Truffle Gift Box (6)'

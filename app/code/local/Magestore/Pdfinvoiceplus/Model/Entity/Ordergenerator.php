@@ -137,22 +137,53 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator extends Magestore_Pdf
         $result = Mage::helper('pdfinvoiceplus/items')
                 ->getTheItemsFromBetwin($templateToProcessForItems,self::THE_START, self::THE_END);
         $i = 1;
-        foreach ($itemsData as $templateVars)
-        {
-            $itemPosition = array('items_position' => $i++);
-            $templateVars = array_merge($itemPosition, $templateVars);
-            $pdfProcessTemplate = Mage::getModel('core/email_template');
-            $itemProcess = $pdfProcessTemplate->setTemplateText($result)->getProcessedTemplate($templateVars);
-//            if($i%2==0){
-//                $itemProcess = str_replace('<tr class="items-tr background-items">','<tr>',$itemProcess);
-//            }
-            $finalItems .= $itemProcess . '<br>';
+        $j = 0;
+        $template = Mage::helper('pdfinvoiceplus/pdf')->getUsingTemplate();
+        $storeId = Mage::app()->getStore()->getStoreId();
+        $choosetemplate = Mage::getStoreConfig('pdfinvoiceplus/general/choosedesign',$storeId);
+        if($template->getData('template_id') == $choosetemplate){
+            $templateExplode = explode('<div class="split"></div>',$templateToProcessForItems);
+            /*get content table item order*/
+            $templateTable = $templateExplode[1];
+            $templateTableFinal = '';
+            $arrayItems = Mage::getSingleton('core/session')->getArrayItems();
+//            Zend_Debug::dump($arrayItems);
+//            die();
+            foreach ($itemsData as $key => $templateVars)
+            {
+                $itemPosition = array('items_position' => $i++);
+                $templateVars = array_merge($itemPosition, $templateVars);
+                $pdfProcessTemplate = Mage::getModel('core/email_template');
+                $itemProcess = $pdfProcessTemplate->setTemplateText($result)->getProcessedTemplate($templateVars);
+                $finalItems .= $itemProcess . '<br>';
+                $j++;
+                if(in_array($j, $arrayItems)){
+                    $templateTableFinal .= str_replace($result, $finalItems, $templateTable);
+                    $finalItems = null;
+                }
+            }
+            if(count($arrayItems) == 0){
+                $templateTableFinal .= str_replace($result, $finalItems, $templateTable);
+            }
+            $templateWithItemsProcessed = $templateExplode[0] . $templateTableFinal . $templateExplode[2];
+
+            $tempmplateForHtmlProcess = '<html>' . $templateWithItemsProcessed . '</html>';
+        }else{
+
+            foreach ($itemsData as $key => $templateVars)
+            {
+                $itemPosition = array('items_position' => $i++);
+                $templateVars = array_merge($itemPosition, $templateVars);
+                $pdfProcessTemplate = Mage::getModel('core/email_template');
+                $itemProcess = $pdfProcessTemplate->setTemplateText($result)->getProcessedTemplate($templateVars);
+
+                $finalItems .= $itemProcess . '<br>';
+            }
+            $templateWithItemsProcessed = str_replace($result, $finalItems, $templateToProcessForItems);
+
+            $tempmplateForHtmlProcess = '<html>' . $templateWithItemsProcessed . '</html>';
         }
-        $templateWithItemsProcessed = str_replace($result, $finalItems, $templateToProcessForItems);
 
-        $tempmplateForHtmlProcess = '<html>' . $templateWithItemsProcessed . '</html>';
-
-        //$htmlTemplateWithItems = Mage::helper('pdfinvoiceplus/items')->processHtml($tempmplateForHtmlProcess);
 
         return $tempmplateForHtmlProcess;
     }
