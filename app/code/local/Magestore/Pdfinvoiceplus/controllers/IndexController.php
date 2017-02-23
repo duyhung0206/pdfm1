@@ -30,9 +30,9 @@ class Magestore_Pdfinvoiceplus_IndexController extends Mage_Core_Controller_Fron
 {
 
 	public function testAction(){
-		$orderId = 4418;
-		$order = Mage::getModel('sales/order')->load($orderId);
-		Zend_debug::dump($order->getData());
+		$file = 'design_order.txt';
+        $current = Mage::getModel('pdfinvoiceplus/template')->load(3);
+        file_put_contents($file, $current->getOrderHtml());
 		die();
 	}
 

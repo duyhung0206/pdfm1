@@ -79,7 +79,8 @@ class Magestore_Pdfinvoiceplus_Adminhtml_Pdfinvoiceplus_OrderController extends 
         return true;
     }
      public function printAction(){
-        Mage::getSingleton('core/session')->setData('type','order'); // Change By Jack 27/12
+         Mage::getSingleton('core/session')->setDataOrderItems(null);
+         Mage::getSingleton('core/session')->setData('type','order'); // Change By Jack 27/12
          if (!$orderId = $this->getRequest()->getParam('order_id'))
         {
             return false;
@@ -92,6 +93,7 @@ class Magestore_Pdfinvoiceplus_Adminhtml_Pdfinvoiceplus_OrderController extends 
             Mage::log($e->getMessage());
             return null;
         }       
+        Mage::getSingleton('core/session')->setDataOrderItems(null);
     }
 }
 

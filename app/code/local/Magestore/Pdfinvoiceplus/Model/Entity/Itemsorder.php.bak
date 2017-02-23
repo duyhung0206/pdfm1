@@ -1,4 +1,4 @@
-    <?php
+<?php
 
 class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator {
 
@@ -66,61 +66,12 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
         $template = Mage::helper('pdfinvoiceplus/pdf')->getUsingTemplate();
         $storeId = Mage::app()->getStore()->getStoreId();
         $choosetemplate = Mage::getStoreConfig('pdfinvoiceplus/general/choosedesign',$storeId);
-        $items = $this->getSource()->getAllItems();
-        $start = Mage::getModel( 'core/date' )->timestamp(time());
         if($template->getData('template_id') == $choosetemplate){
-
-
             $maxSizeRow = 6.5;
-            $sizeOneLine = 0.10416666;
+            $sizeOneLine = 0.104166667;
             $spaceInLine = 0.02;
-            $spaceInRow = 0.105510753;
+            $spaceInRow = 0.104166667;
             $sizeRow = 0;
-            $arrayItems = array();
-            $arrayOrder = Mage::getSingleton('core/session')->getDataOrderItems();
-            if(isset($arrayOrder) && $arrayOrder['order_id'] == $this->getOrder()->getId())
-                return $arrayOrder['value'];
-            $items = $this->getSource()->getAllItems();
-//            $items = array_merge($items,$items);
-//            $items = array_merge($items,$items);
-//            $items = array_merge($items,$items);
-//            $items = array_merge($items,$items);
-//            $items = array_merge($items,$items);
-            foreach ($items as $key => $item)
-            {
-                $this->setItem($item);
-                if ($item->getParentItem())
-                {
-                    $theParent = $item->getParentItem();
-                    if (Mage::helper('pdfinvoiceplus/product')->isConfigurable($theParent->getProductId()))
-                    {
-                        continue;
-                    }
-                    $isChild = true;
-                } else
-                {
-                    $isChild = false;
-                }
-   
-                $standardVars = $this->getSandardItemVars($item);
-                $wordwrap3 = wordwrap($standardVars['items_tagline']['value'], 36, "\n", true);
-                // $wordwrap2 = wordwrap($standardVars['items_fragrance']['value'], 39, "\n", true);
-                $wordwrap21 = wordwrap($standardVars['items_name']['value'], 39, "\n", true);
-                $rowC21 = substr_count($wordwrap21, "\n") + 1;
-                // $rowC2 = substr_count($wordwrap2, "\n") + 1;
-                $rowC3 = substr_count($wordwrap3, "\n") + 1;
-                $row = max($rowC3, $rowC21);
-                $sizeRow += $row * $sizeOneLine + ($row-1) * $spaceInLine + $spaceInRow;
-
-                $attr[] = array_merge($standardVars);
-                if($sizeRow >= $maxSizeRow){
-                    $arrayItems[] = count($attr);
-                    $sizeRow = 0;
-                }
-            }
-            Mage::getSingleton('core/session')->setArrayItems($arrayItems);
-            
-        }else{
             foreach ($this->getSource()->getAllItems() as $item)
             {
 
@@ -147,28 +98,66 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
                     $item->getProductId(), $this->getOrder()->getStoreId(), $isChild);
 
                 $standardVars = $this->getSandardItemVars($item);
+                $wordwrap3 = wordwrap($standardVars['items_tagline']['value'], 36, "\n", true);
+                $wordwrap2 = wordwrap($standardVars['items_fragrance']['value'], 39, "\n", true);
+                $wordwrap21 = wordwrap($standardVars['items_name']['value'], 39, "\n", true);
+                $rowC21 = substr_count($wordwrap21, "\n") + 1;
+                $rowC2 = substr_count($wordwrap2, "\n") + 1;
+                $rowC3 = substr_count($wordwrap3, "\n") + 1;
+                $row = max( $rowC2, $rowC3, $rowC21);
+                $sizeRow += $row * $sizeOneLine + ($row-1) * $spaceInLine + $spaceInRow;
+                if($sizeRow >= $maxSizeRow)
+                    break;
                 $productioptions = $this->getItemOptions();
                 if (isset($productioptions))
                 {
-                   $attr[] = array_merge($itemsPriceData, $userAttributeData, $standardVars, $productioptions, $imageData);
+                    $attr[] = array_merge($itemsPriceData, $userAttributeData, $standardVars, $productioptions, $imageData);
                 } else
                 {
                     $attr[] = array_merge($itemsPriceData, $userAttributeData, $standardVars, $imageData);
                 }
+                //}
+            }
+        }else{
+
+            foreach ($this->getSource()->getAllItems() as $item)
+            {
+
+                $this->setItem($item);
+                if ($item->getParentItem())
+                {
+                    $theParent = $item->getParentItem();
+                    if (Mage::helper('pdfinvoiceplus/product')->isConfigurable($theParent->getProductId()))
+                    {
+                        continue;
+                    }
+                    $isChild = true;
+                } else
+                {
+                    $isChild = false;
+                }
+
+                $imageData = Mage::helper('pdfinvoiceplus/product')->getTheProductImage($item->getProductId());
+                if($item->isChildrenCalculated())
+                    $itemsPriceData = $this->isPriceDisplayOptions($item);
+                else
+                    $itemsPriceData = array();
+                $userAttributeData = Mage::helper('pdfinvoiceplus/product')->getDataAsVar(
+                    $item->getProductId(), $this->getOrder()->getStoreId(), $isChild);
+
+                $standardVars = $this->getSandardItemVars($item);
+
+                $productioptions = $this->getItemOptions();
+                if (isset($productioptions))
+                {
+                    $attr[] = array_merge($itemsPriceData, $userAttributeData, $standardVars, $productioptions, $imageData);
+                } else
+                {
+                    $attr[] = array_merge($itemsPriceData, $userAttributeData, $standardVars, $imageData);
+                }
+                //}
             }
         }
-        $end = Mage::getModel( 'core/date' )->timestamp(time());
-        $timestamp = $end-$start;
-        Mage::log("Start - End:". ($end-$start), null, 'timestamp.log');
-        // echo $timestamp;
-        // zend_debug::dump($attr);
-        // die();
-
-        $arrayOrder = array(
-                'order_id' => $this->getOrder()->getId(),
-                'value' => $attr
-            );
-        Mage::getSingleton('core/session')->setDataOrderItems($arrayOrder);
         return $attr;
     }
     public function getSandardItemVars($item)
@@ -229,10 +218,6 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
                     $price = $order->formatPriceTxt($item->getPrice());
                 }
             }
-
-        $template = Mage::helper('pdfinvoiceplus/pdf')->getUsingTemplate();
-        $storeId = Mage::app()->getStore()->getStoreId();
-        $choosetemplate = Mage::getStoreConfig('pdfinvoiceplus/general/choosedesign',$storeId);
 //        $qtyordered =(int)$items['qty_ordered'];
 //        $qtyinvoiced = (int)$items['qty_invoiced'];
 //        $qtyrefunded = (int) $items['qty_refunded'];
@@ -247,104 +232,96 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
             $qtyrefunded ='Refunded: '.(int)$item->getQtyRefunded();
         }
         $itemSku =implode('<br/>',Mage::helper('catalog')->splitSku($item->getSku()));
-        if($template['template_id'] == $choosetemplate){
-             $standardVars['items_name'] =array(
-                    'value' => $items['name']
-                ); 
-            $standardVars['items_qty_ordered'] =array(
+        foreach ($items as $key => $value){
+            $standardVars['items_'.$key]=array('value'=> $value);
+            if($key =='qty_ordered'){
+                $standardVars['items_qty_ordered'] =array(
                     'value' => $qtyordered
                 ); 
-        }else{
-            foreach ($items as $key => $value){
-
-                    $standardVars['items_'.$key]=array('value'=> $value);
-                if($key =='qty_ordered'){
-                    $standardVars['items_qty_ordered'] =array(
-                        'value' => $qtyordered
-                    ); 
-                }
-                if($key =='qty_invoiced'){
-                    $standardVars['items_qty_invoiced'] =array(
-                        'value' => $qtyinvoiced 
-                    ); 
-                }
-                $standardVars['items_no_number'] =array(
-                        'value' => 1
-                    );
-                if($key =='qty_refunded'){
-                    $standardVars['items_qty_refunded'] =array(
-                        'value' => $qtyrefunded
-                    ); 
-                }
-                if($key =='row_total'){
-                    $standardVars['items_row_total'] =array(
-                        'value' => $rowTotal
-                    ); 
-                }
-                if($key =='price'){
-                    $standardVars['items_price']= array(
-                        'value'=> $price
-                    );
-                }
-                if($key == 'original_price'){
-                    $standardVars['items_original_price']= array(
-                        'value' => Mage::helper('core')-> currency($items['original_price'])
-                    );
-                }
-                if($key =='discount_amount'){
-                    $standardVars['items_discount_amount'] = array(
-                        'value' => Mage::helper('core')-> currency($items['discount_amount'])
-                    );
-                }
-                //edit by Zeus 15/01/2014
-                 if($key =='tax_amount'){
-                    if($taxAmount){
-                        $standardVars['items_tax_amount'] =array(
-                         'value' => $taxAmount
-                    );
-                    }else{
+            }
+            if($key =='qty_invoiced'){
+                $standardVars['items_qty_invoiced'] =array(
+                    'value' => $qtyinvoiced 
+                ); 
+            }
+			$standardVars['items_no_number'] =array(
+                    'value' => 1
+                );
+            if($key =='qty_refunded'){
+                $standardVars['items_qty_refunded'] =array(
+                    'value' => $qtyrefunded
+                ); 
+            }
+            if($key =='row_total'){
+                $standardVars['items_row_total'] =array(
+                    'value' => $rowTotal
+                ); 
+            }
+            if($key =='price'){
+                $standardVars['items_price']= array(
+                    'value'=> $price
+                );
+            }
+            if($key == 'original_price'){
+                $standardVars['items_original_price']= array(
+                    'value' => Mage::helper('core')-> currency($items['original_price'])
+                );
+            }
+            if($key =='discount_amount'){
+                $standardVars['items_discount_amount'] = array(
+                    'value' => Mage::helper('core')-> currency($items['discount_amount'])
+                );
+            }
+            //edit by Zeus 15/01/2014
+             if($key =='tax_amount'){
+                if($taxAmount){
                     $standardVars['items_tax_amount'] =array(
-                         'value' => $taxAmount = $order->formatPriceTxt(0)
-                    ); 
-                    }
-                }
-                //End edit
-                if($key =='tax_percent'){
-                    $standardVars['items_tax_percent'] =array(
-                         'value' => $taxPercent
-                    ); 
-                }
-                if($key =='product_options'){
-                    $standardVars['items_product_options'] =array(
-                        'value' => $productioptions
-                    ); 
-                }
-                if($key =='sku'){
-                    $standardVars['items_sku'] =array(
-                        'value' => $itemSku
-                    ); 
+                     'value' => $taxAmount
+                );
+                }else{
+                $standardVars['items_tax_amount'] =array(
+                     'value' => $taxAmount = $order->formatPriceTxt(0)
+                ); 
                 }
             }
-            
+            //End edit
+			if($key =='tax_percent'){
+                $standardVars['items_tax_percent'] =array(
+                     'value' => $taxPercent
+                ); 
+            }
+            if($key =='product_options'){
+                $standardVars['items_product_options'] =array(
+                    'value' => $productioptions
+                ); 
+            }
+            if($key =='sku'){
+                $standardVars['items_sku'] =array(
+                    'value' => $itemSku
+                ); 
+            }
         }
-//       $product_id = $item->getProductId();
-//       $product = Mage::getModel('catalog/product')->load($product_id);
-//       $listFragrance = $product->getAttributeText('fragrance');
-//       $standardVars['items_fragrance'] =array(
-//           'value' => implode(" - ",$listFragrance)
-//       );
+//        $product_id = $item->getProductId();
+//        $product = Mage::getModel('catalog/product')->load($product_id);
+//        $listFragrance = $product->getAttributeText('fragrance');
+//        $standardVars['items_fragrance'] =array(
+//            'value' => implode(" - ",$listFragrance)
+//        );
 //
-//       $standardVars['items_tagline'] =array(
-//           'value' => $product->getData('tagline')
-//       );
+//        $standardVars['items_tagline'] =array(
+//            'value' => $product->getData('tagline')
+//        );
+
         $standardVars['items_fragrance'] =array(
-           'value' => 'Strawberry & Poppyseed '
-       );
+            'value' => 'Strawberry & Poppyseed (6)'
+        );
 
-       $standardVars['items_tagline'] =array(
-           'value' => 'Bath Truffle Gift Box (6)'
-       );
-
+        $standardVars['items_tagline'] =array(
+            'value' => 'Bath Truffle Gift Box (6)'
+        );
+//        $standardVars['items_tagline'] =array(
+//            'value' => 'Bath Truffle Gift Box (6)'
+//        );
         return $standardVars;
     }
 

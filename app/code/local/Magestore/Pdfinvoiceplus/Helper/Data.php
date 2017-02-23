@@ -52,7 +52,7 @@ class Magestore_Pdfinvoiceplus_Helper_Data extends Mage_Core_Helper_Abstract
             $giftMessage = $message;
         }
 
-        $rate = 3.7;
+        $rate = 3;
         $oW = 393.6*$rate;
         $oH = 288*$rate;
         $url_font = Mage::getBaseDir().'/media/magestore/pdfinvoiceplus/fonts/CG.ttf';
@@ -89,6 +89,7 @@ class Magestore_Pdfinvoiceplus_Helper_Data extends Mage_Core_Helper_Abstract
         $data = ob_get_contents();
         ob_get_clean();
         imagedestroy($rotation);
+        $end = Mage::getModel('core/date')->timestamp(time());
         return 'data:image/png;base64,' . base64_encode($data);
     }
 
