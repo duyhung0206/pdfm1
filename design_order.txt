@@ -8,6 +8,8 @@
             
             
             
+            
+            
 	<style>
 		* {
 		margin: 0;
@@ -399,7 +401,7 @@
 				</div>
 			</div>
 		</div>
-		<div id="sidedown" style="
+		<div class="split"></div><div id="sidedown" style="
 			background: url(/media/bg.jpg);
 			background-size: cover;
 			width: 5.8in;
@@ -421,8 +423,8 @@
 							width: 100%;
 							">
 							<th title="Click to edit, right-click to insert variable" class="color-theme label contenteditable" contenteditable="true" style="text-align: left; width: 18.6047%;" placeholder="Click to edit!"></th>
-							<th title="Click to edit, right-click to insert variable" class="color-theme label contenteditable" contenteditable="true" style="text-align: left; width: 43.6047%;" placeholder="Click to edit!"></th>
-							<th title="Click to edit, right-click to insert variable" class="color-theme label contenteditable" contenteditable="true" style="text-align: left; width: 37.7907%;" placeholder="Click to edit!"></th>
+							<th title="Click to edit, right-click to insert variable" class="color-theme label contenteditable" contenteditable="true" style="text-align: left; width: 43.4109%;" placeholder="Click to edit!"></th>
+							<th title="Click to edit, right-click to insert variable" class="color-theme label contenteditable" contenteditable="true" style="text-align: left; width: 37.9845%;" placeholder="Click to edit!"></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -465,6 +467,6 @@
 					<address contextmenu-type="main" title="Click to edit, right-click to insert variable" contenteditable="true" style="color: #4A453F;font-style: normal;">online@yorkshiresoap.co.uk</address>
 				</div>
 			</div>
-		</div>
+		</div><div class="split"></div>
 	</div>
-                                                                        
+                                                                                        
