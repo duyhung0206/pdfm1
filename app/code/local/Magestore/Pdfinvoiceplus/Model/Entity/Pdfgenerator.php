@@ -186,7 +186,7 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Pdfgenerator extends Magestore_Pdfin
    <td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="right" placeholder="Click to edit!" style="font-size: 10px; background-color: #ffffff;"></td>
    <td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="right" placeholder="Click to edit!" style="font-size: 10px; background-color: #ffffff;"></td>
    <td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="right" placeholder="Click to edit!" style="font-size: 10px; background-color: #ffffff;"></td>
-   <td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="right" placeholder="Click to edit!" style="font-size: 10px; background-color: #ffffff;">'.$templateVars['items_discount_amount'].'</td>
+   <td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="right" placeholder="Click to edit!" style="font-size: 10px; background-color: #ffffff;">'.($templateVars['items_discount_amount']?$templateVars['items_discount_amount']:Mage::helper('core')->currency(0, true, false)).'</td>
 </tr>'.'<!--<br>';
             $finalItems .= $itemProcess . '<br>';
         }
@@ -273,7 +273,7 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Pdfgenerator extends Magestore_Pdfin
 
             $mailPdf->setData('htmltemplate', $templateBody);
             $output = $pdf->Output($this->getFileName(), 'S');
-            $output = $pdf->Output($this->getFileName(), 'I');
+//            $output = $pdf->Output($this->getFileName(), 'I');
             $mailPdf->setData('pdfbody', $output);
             $mailPdf->setData('filename', $this->getFileName());
         }

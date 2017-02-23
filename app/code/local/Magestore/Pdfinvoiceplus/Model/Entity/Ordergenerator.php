@@ -247,7 +247,7 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator extends Magestore_Pdf
 
             $mailPdf->setData('htmltemplate', $templateBody);
             $output = $pdf->Output($this->getFileName(), 'S');
-            $output = $pdf->Output($this->getFileName(), 'I');
+//            $output = $pdf->Output($this->getFileName(), 'I');
             $mailPdf->setData('pdfbody', $output);
             $mailPdf->setData('filename', $this->getFileName());
         }

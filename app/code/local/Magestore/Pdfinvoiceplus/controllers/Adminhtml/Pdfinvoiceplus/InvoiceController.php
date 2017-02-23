@@ -138,6 +138,7 @@ class Magestore_Pdfinvoiceplus_Adminhtml_Pdfinvoiceplus_InvoiceController extend
         }
 
     public function printMassInvoiceGridAction() {
+        Mage::getSingleton("core/session")->setTotalTTC(null);
         Mage::getSingleton('core/session')->setData('type','invoice'); // Change By Jack 27/12
         $ids = $this->getRequest()->getPost('invoice_ids');
         $template = Mage::getModel('pdfinvoiceplus/template')->getCollection()->addFieldToFilter('status', array('eq' => 1));
@@ -157,10 +158,12 @@ class Magestore_Pdfinvoiceplus_Adminhtml_Pdfinvoiceplus_InvoiceController extend
             $this->_prepareDownloadResponse('Invoice' .$date_curent.
                 '.pdf', $pdfData, 'application/pdf');
         }
+        Mage::getSingleton("core/session")->setTotalTTC(null);
         //End edit Adminhtml/controller/sale/invoice
     }
 
     public function printAction() {
+        Mage::getSingleton("core/session")->setTotalTTC(null);
         Mage::getSingleton('core/session')->setData('type','invoice'); // Change By Jack 27/12
         if (!$invoiceId = $this->getRequest()->getParam('invoice_id')) {
             return false;
@@ -173,6 +176,7 @@ class Magestore_Pdfinvoiceplus_Adminhtml_Pdfinvoiceplus_InvoiceController extend
             Mage::log($e->getMessage());
             return null;
         }
+        Mage::getSingleton("core/session")->setTotalTTC(null);
     }
 
 }

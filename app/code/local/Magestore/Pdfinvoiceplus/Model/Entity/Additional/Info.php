@@ -106,6 +106,24 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Additional_Info extends Magestore_Pd
             $order = $invoice->getOrder();
 			$totalQty=$order->getData('total_qty_ordered');
 
+            $totalTTC = 0;
+            /*caculate total TTC*/
+            foreach ($this->getSource()->getAllItems() as $item) {
+//                $this->setItem($item);
+                if ($item->getOrderItem()->getParentItem()) {
+                    $theParent = $item->getOrderItem()->getParentItem();
+                    if (Mage::helper('pdfinvoiceplus/product')->isConfigurable($theParent->getProductId())) {
+                        continue;
+                    }
+                }
+                $totalTTC += $item->getData('row_total_incl_tax') - $item->getData('discount_amount');
+
+
+            }
+
+            $variables['invoice_totalTTC'] = array(
+                'value' => $order->formatPriceTxt(($totalTTC+$invoice->getShippingAmount()), true, false)
+            );
             foreach ($invoice->getData() as $key => $value) {
                     $variables['invoice_' . $key] = array(
                         'value' => $value,

@@ -168,7 +168,8 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Items extends Magestore_Pdfinvoicepl
                 'label' => 'Tax Percent'
             )
         );
-        //zend_debug::dump($standardVars); die('vao invoice items');
+
+//        zend_debug::dump($standardVars); die('vao invoice items');
         return $standardVars;
     }
 
