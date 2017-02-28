@@ -69,17 +69,12 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
         $items = $this->getSource()->getAllItems();
         $start = Mage::getModel( 'core/date' )->timestamp(time());
         if($template->getData('template_id') == $choosetemplate){
-
-
             $maxSizeRow = 6.5;
             $sizeOneLine = 0.10416666;
             $spaceInLine = 0.02;
             $spaceInRow = 0.105510753;
             $sizeRow = 0;
             $arrayItems = array();
-            $arrayOrder = Mage::getSingleton('core/session')->getDataOrderItems();
-            if(isset($arrayOrder) && $arrayOrder['order_id'] == $this->getOrder()->getId())
-                return $arrayOrder['value'];
             $items = $this->getSource()->getAllItems();
             foreach ($items as $key => $item)
             {
@@ -107,7 +102,7 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
                 $row = max($rowC3, $rowC21);
                 $sizeRow += $row * $sizeOneLine + ($row-1) * $spaceInLine + $spaceInRow;
 
-                $attr[] = $standardVars;
+                $attr[] = array_merge($standardVars);
                 if($sizeRow >= $maxSizeRow){
                     $arrayItems[] = count($attr);
                     $sizeRow = 0;
@@ -158,12 +153,6 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
         // echo $timestamp;
         // zend_debug::dump($attr);
         // die();
-
-        $arrayOrder = array(
-                'order_id' => $this->getOrder()->getId(),
-                'value' => $attr
-            );
-        Mage::getSingleton('core/session')->setDataOrderItems($arrayOrder);
         return $attr;
     }
     public function getSandardItemVars($item)
@@ -322,23 +311,16 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
             }
             
         }
-      $product_id = $item->getProductId();
-      $product = Mage::getModel('catalog/product')->load($product_id);
-      $listFragrance = $product->getAttributeText('fragrance');
-      $standardVars['items_fragrance'] =array(
-          'value' => implode(" - ",$listFragrance)
-      );
+       $product_id = $item->getProductId();
+       $product = Mage::getModel('catalog/product')->load($product_id);
+       $listFragrance = $product->getAttributeText('fragrance');
+       $standardVars['items_fragrance'] =array(
+           'value' => implode(" - ",$listFragrance)
+       );
 
-      $standardVars['items_tagline'] =array(
-          'value' => $product->getData('tagline')
-      );
-       //  $standardVars['items_fragrance'] =array(
-       //     'value' => 'Strawberry & Poppyseed '
-       // );
-
-       // $standardVars['items_tagline'] =array(
-       //     'value' => 'Bath Truffle Gift Box (6)'
-       // );
+       $standardVars['items_tagline'] =array(
+           'value' => $product->getData('tagline')
+       );
 
         return $standardVars;
     }

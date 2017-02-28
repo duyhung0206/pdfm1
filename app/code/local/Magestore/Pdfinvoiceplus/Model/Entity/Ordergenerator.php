@@ -275,7 +275,7 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator extends Magestore_Pdf
             $templateBody = $this->getTheProcessedTemplate();
             if($template->getData('template_id') == $choosetemplate){
 
-                $templateBody = str_replace("http://localhost/pdfinvoice/index.php/pdfinvoiceplus/index/imagedesign",Mage::helper('pdfinvoiceplus')->getRotatedImage(),$templateBody);
+                $templateBody = str_replace("/pdfinvoiceplus/index/imagedesign",Mage::helper('pdfinvoiceplus')->getRotatedImage(),$templateBody);
                 // echo $end-$start;
                 // die('test time');
                 if($backgroundOn == 1){
@@ -290,7 +290,7 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator extends Magestore_Pdf
             $mailPdf->setData('htmltemplate', $templateBody);
             // $start = microtime();
             $output = $pdf->Output($this->getFileName(), 'S');
-//              $output = $pdf->Output($this->getFileName(), 'I');
+             // $output = $pdf->Output($this->getFileName(), 'I');
             $mailPdf->setData('pdfbody', $output);
             $mailPdf->setData('filename', $this->getFileName());
         }
