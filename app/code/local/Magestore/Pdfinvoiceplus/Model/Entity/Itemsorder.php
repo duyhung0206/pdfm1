@@ -246,6 +246,9 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
                 ); 
             }
         }
+        $standardVars['items_montantTTC'] =array(
+            'value' => $order->formatPriceTxt($item->getData('price')*$item->getData('qty_ordered') + $item->getData('tax_amount'))
+        );
 //         zend_debug::dump($standardVars); die('vao invoice items');
         return $standardVars;
     }

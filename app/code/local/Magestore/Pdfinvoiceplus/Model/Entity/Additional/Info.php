@@ -12,9 +12,27 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Additional_Info extends Magestore_Pd
 
     public function getTheOrderVariables() {
         $order = $this->getOrder(); // change by Jack 25/12
+        $variables = array();
         $store = Mage::app()->getStore($this->getStoreId());
 		$totalQty=$order->getData('total_qty_ordered');
-        $variables = array();
+        $totalTTC = 0;
+        /*caculate total TTC*/
+        foreach ($order->getAllItems() as $item) {
+//                $this->setItem($item);
+            if ($item->getParentItem()) {
+                continue;
+            }
+//            Zend_Debug::dump($item->getData('tax_amount'));
+//            die();
+            $totalTTC += $item->getData('price')*$item->getData('qty_ordered') + $item->getData('tax_amount') - $item->getData('discount_amount');
+
+
+        }
+        $variables['order_totalTTC'] = array(
+            'value' => $order->formatPriceTxt(($totalTTC+$order->getData('shipping_amount')), true, false)
+        );
+
+
 		// zend_debug::dump();die;
         foreach ($order->getData() as $key => $value) {
             $variables['order_' . $key] = array('value' => $value);
@@ -116,7 +134,7 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Additional_Info extends Magestore_Pd
                         continue;
                     }
                 }
-                $totalTTC += $item->getData('row_total_incl_tax') - $item->getData('discount_amount');
+                $totalTTC += $item->getData('price')*$item->getData('qty') + $item->getData('tax_amount') - $item->getData('discount_amount');
 
 
             }
