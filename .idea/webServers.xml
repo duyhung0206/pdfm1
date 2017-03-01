@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="d8bb1f2f-9cbf-4f42-8558-0eac44ead478" name="pdfinvoice" url="http://localhost">
+        <fileTransfer port="0" mountedRoot="$USER_HOME$/htdocs/pdfinvoice" accessType="MOUNT" />
+      </webServer>
+    </option>
+  </component>
+</project>
