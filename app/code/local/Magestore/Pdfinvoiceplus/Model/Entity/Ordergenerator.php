@@ -133,7 +133,8 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator extends Magestore_Pdf
         $items = Mage::getModel('pdfinvoiceplus/entity_itemsorder')
                         ->setSource($this->getTheOrder())->setOrder($this->getTheOrder());
         $itemsData = $items->processAllVars();
-        
+//        Zend_Debug::dump($itemsData);
+//        die();
         $result = Mage::helper('pdfinvoiceplus/items')
                 ->getTheItemsFromBetwin($templateToProcessForItems,self::THE_START, self::THE_END);
         $i = 1;
@@ -146,22 +147,85 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator extends Magestore_Pdf
             /*get content table item order*/
             $templateTable = $templateExplode[1];
             $templateTableFinal = '';
+            $maxSizeRow = 6.5;
             $arrayItems = Mage::getSingleton('core/session')->getArrayItems();
+            $arrayHight = Mage::getSingleton('core/session')->getHightRow();
+//            echo htmlentities($templateTable).'<br/>';
+//            echo htmlentities($result);
 //            Zend_Debug::dump($arrayItems);
+            Zend_Debug::dump($arrayHight);
+//            die();
+            $bundleProduct = array();
+            $productSubBundle = array();
+            $currenySizeRow = floatval(0);
+            foreach ($itemsData as $key => $templateVars)
+            {
+                if($templateVars['items_product_type'] == 'bundle'){
+                    $bundleProduct[] =  $templateVars['items_item_id'];
+                }
+                if(in_array($templateVars['parent_item_id'], $bundleProduct)){
+                    $productSubBundle[$templateVars['parent_item_id']][] = $templateVars['items_item_id'];
+                }
+            }
+            $rowSizeBundleProduct = array();
+            foreach ($productSubBundle as $key => $rowBundleProduct){
+                $totalSize = 0;
+                foreach ($rowBundleProduct as $temp){
+                    $totalSize += $arrayHight[$temp];
+                }
+                $rowSizeBundleProduct[$key] = $totalSize;
+            }
+//            Zend_Debug::dump($productSubBundle);
+//            Zend_Debug::dump($itemsData);
 //            die();
             foreach ($itemsData as $key => $templateVars)
             {
-                $itemPosition = array('items_position' => $i++);
-                $templateVars = array_merge($itemPosition, $templateVars);
-                $pdfProcessTemplate = Mage::getModel('core/email_template');
-                $itemProcess = $pdfProcessTemplate->setTemplateText($result)->getProcessedTemplate($templateVars);
-                $finalItems .= $itemProcess . '<br>';
-                $j++;
-                if(in_array($j, $arrayItems)){
+                if($templateVars['items_product_type'] == 'bundle'){
+                    $currenySizeRow += $rowSizeBundleProduct[$templateVars['items_item_id']];
+//                    echo $templateVars['items_item_id']. 'bundle:'.$rowSizeBundleProduct[$templateVars['items_item_id']].'<br/>';
+                }
+//                Zend_Debug::dump($templateVars['items_item_id']);
+//                Zend_Debug::dump($arrayHight[$templateVars['items_item_id']]);
+//                Zend_Debug::dump($currenySizeRow);
+//                die();
+                if($currenySizeRow > $maxSizeRow){
+//                    echo ($currenySizeRow-$rowSizeBundleProduct[$templateVars['items_item_id']]).'<br/>';
                     $templateTableFinal .= str_replace($result, $finalItems, $templateTable);
                     $finalItems = null;
+                    $currenySizeRow = 0;
                 }
+                $itemPosition = array('items_position' => $i++);
+                if(isset($templateVars['parent_item_id']) && in_array($templateVars['parent_item_id'], $bundleProduct)) {
+                    $itemProcess =
+                        '--><tr class="style-border-color"> 
+<td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="center" placeholder="Click to edit!" style="padding: 0.03in;font-family: \'centurygothic\';color: #4A453F;font-style: normal;font-size: 9px"></td> 
+<td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="left" placeholder="Click to edit!" style="padding: 0.03in;padding-left: 0.2in;font-family: \'centurygothic\';color: #4A453F;font-style: normal;font-size: 9px">'.$templateVars['items_qty_ordered'].' <span>x</span> '.$templateVars['items_name'].'</td> 
+<td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="left" placeholder="Click to edit!" style="padding: 0.03in;padding-left: 0.4in;color: #4A453F;font-style: normal;font-family: \'centurygothic\';font-size: 9px">'.$templateVars['items_name'].'</td> 
+</tr><!-- ';
+                }else{
+                    $currenySizeRow += $arrayHight[$templateVars['items_item_id']];
+//                    echo 'simple:'.$arrayHight[$templateVars['items_item_id']].'<br/>';
+                    if($currenySizeRow > $maxSizeRow){
+//                        echo ($currenySizeRow-$arrayHight[$templateVars['items_item_id']]).'<br/>';
+                        $templateTableFinal .= str_replace($result, $finalItems, $templateTable);
+                        $finalItems = null;
+                        $currenySizeRow = 0;
+                    }
+                    $templateVars = array_merge($itemPosition, $templateVars);
+                    $pdfProcessTemplate = Mage::getModel('core/email_template');
+                    $itemProcess = $pdfProcessTemplate->setTemplateText($result)->getProcessedTemplate($templateVars);
+                }
+
+                $finalItems .= $itemProcess . '<br>';
+                $j++;
+//                if(in_array($j, $arrayItems)){
+//                    $templateTableFinal .= str_replace($result, $finalItems, $templateTable);
+//                    $finalItems = null;
+//                }
             }
+//            die();
+
+
             if(count($arrayItems) == 0){
                 $templateTableFinal .= str_replace($result, $finalItems, $templateTable);
             }
@@ -290,7 +354,7 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator extends Magestore_Pdf
             $mailPdf->setData('htmltemplate', $templateBody);
             // $start = microtime();
             $output = $pdf->Output($this->getFileName(), 'S');
-             // $output = $pdf->Output($this->getFileName(), 'I');
+              $output = $pdf->Output($this->getFileName(), 'I');
             $mailPdf->setData('pdfbody', $output);
             $mailPdf->setData('filename', $this->getFileName());
         }

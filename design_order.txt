@@ -10,6 +10,7 @@
             
             
             
+            
 	<style>
 		* {
 		margin: 0;
@@ -431,12 +432,12 @@
 						<!-- ITEMS HERE -->
 						<!--            ##productlist_start##-->
 						<tr class="style-border-color">
-							<td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="center" placeholder="Click to edit!" style="padding: 0.04in;font-family: 'centurygothic';color: #4A453F;font-style: normal;">
+							<td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="center" placeholder="Click to edit!" style="padding: 0.04in;font-family: 'centurygothic';color: #4A453F;font-weight: bold;">
 								{{var items_qty_ordered}}
 							</td>
-							<td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="left" placeholder="Click to edit!" style="padding: 0.04in;padding-left: 0.1in;font-family: 'centurygothic';color: #4A453F;font-style: normal;">{{var items_name}}
+							<td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="left" placeholder="Click to edit!" style="padding: 0.04in;padding-left: 0.1in;font-family: 'centurygothic';color: #4A453F;font-weight: bold;">{{var items_name}}
 							</td>
-							<td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="left" placeholder="Click to edit!" style="padding: 0.04in;padding-left: 0.24in;color: #4A453F;font-style: normal;font-family: 'centurygothic';">{{var items_tagline}}</td>
+							<td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="left" placeholder="Click to edit!" style="padding: 0.04in;padding-left: 0.24in;color: #4A453F;font-weight: bold;font-family: 'centurygothic';">{{var items_tagline}}</td>
 						</tr>
 						<!--            ##productlist_end##-->
 					</tbody>
@@ -469,4 +470,4 @@
 			</div>
 		</div><div class="split"></div>
 	</div>
-                                                                                        
+                                                                                                

@@ -67,10 +67,9 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
         $storeId = Mage::app()->getStore()->getStoreId();
         $choosetemplate = Mage::getStoreConfig('pdfinvoiceplus/general/choosedesign',$storeId);
         $items = $this->getSource()->getAllItems();
-        $start = Mage::getModel( 'core/date' )->timestamp(time());
+        $arrayHight = array();
+
         if($template->getData('template_id') == $choosetemplate){
-
-
             $maxSizeRow = 6.5;
             $sizeOneLine = 0.10416666;
             $spaceInLine = 0.02;
@@ -81,6 +80,9 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
             if(isset($arrayOrder) && $arrayOrder['order_id'] == $this->getOrder()->getId())
                 return $arrayOrder['value'];
             $items = $this->getSource()->getAllItems();
+            $items = array_merge($items, $items);
+            $items = array_merge($items, $items);
+            $items = array_merge($items, $items);
             foreach ($items as $key => $item)
             {
                 $this->setItem($item);
@@ -106,7 +108,7 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
                 $rowC3 = substr_count($wordwrap3, "\n") + 1;
                 $row = max($rowC3, $rowC21);
                 $sizeRow += $row * $sizeOneLine + ($row-1) * $spaceInLine + $spaceInRow;
-
+                $arrayHight[$item->getId()] = $row * $sizeOneLine + ($row-1) * $spaceInLine + $spaceInRow;
                 $attr[] = $standardVars;
                 if($sizeRow >= $maxSizeRow){
                     $arrayItems[] = count($attr);
@@ -114,7 +116,8 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
                 }
             }
             Mage::getSingleton('core/session')->setArrayItems($arrayItems);
-            
+            Mage::getSingleton('core/session')->setHightRow($arrayHight);
+
         }else{
             foreach ($this->getSource()->getAllItems() as $item)
             {
@@ -153,9 +156,6 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
             }
         }
         $end = Mage::getModel( 'core/date' )->timestamp(time());
-        $timestamp = $end-$start;
-        Mage::log("Start - End:". ($end-$start), null, 'timestamp.log');
-        // echo $timestamp;
         // zend_debug::dump($attr);
         // die();
 
@@ -171,7 +171,7 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
         $order = $this->getOrder();
         $productioptions = $this->getItemOptions();
         $items = $item->getData();
-       //zend_debug::dump($items); die('vao order items');
+
         /* Change by Zeus 04/12 */
         $taxPercent = NULL;
         $taxAmount = NULL;
@@ -242,13 +242,24 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
             $qtyrefunded ='Refunded: '.(int)$item->getQtyRefunded();
         }
         $itemSku =implode('<br/>',Mage::helper('catalog')->splitSku($item->getSku()));
+//        Zend_Debug::dump($items);
+
         if($template['template_id'] == $choosetemplate){
-             $standardVars['items_name'] =array(
+            $standardVars['items_item_id'] =array(
+                'value' => $items['item_id']
+            );
+            $standardVars['parent_item_id'] =array(
+                'value' => $items['parent_item_id']
+            );
+            $standardVars['items_product_type'] =array(
+                'value' => $items['product_type']
+            );
+            $standardVars['items_name'] =array(
                     'value' => $items['name']
                 ); 
             $standardVars['items_qty_ordered'] =array(
                     'value' => $qtyordered
-                ); 
+                );
         }else{
             foreach ($items as $key => $value){
 
@@ -322,23 +333,23 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Itemsorder extends Magestore_Pdfinvo
             }
             
         }
-      $product_id = $item->getProductId();
-      $product = Mage::getModel('catalog/product')->load($product_id);
-      $listFragrance = $product->getAttributeText('fragrance');
-      $standardVars['items_fragrance'] =array(
-          'value' => implode(" - ",$listFragrance)
-      );
+//      $product_id = $item->getProductId();
+//      $product = Mage::getModel('catalog/product')->load($product_id);
+//      $listFragrance = $product->getAttributeText('fragrance');
+//      $standardVars['items_fragrance'] =array(
+//          'value' => implode(" - ",$listFragrance)
+//      );
+//
+//      $standardVars['items_tagline'] =array(
+//          'value' => $product->getData('tagline')
+//      );
+         $standardVars['items_fragrance'] =array(
+            'value' => 'Strawberry & Poppyseed '
+        );
 
-      $standardVars['items_tagline'] =array(
-          'value' => $product->getData('tagline')
-      );
-       //  $standardVars['items_fragrance'] =array(
-       //     'value' => 'Strawberry & Poppyseed '
-       // );
-
-       // $standardVars['items_tagline'] =array(
-       //     'value' => 'Bath Truffle Gift Box (6)'
-       // );
+        $standardVars['items_tagline'] =array(
+            'value' => 'Bath Truffle Gift Box (6)'
+        );
 
         return $standardVars;
     }
