@@ -260,14 +260,17 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Pdfgenerator extends Magestore_Pdfin
     public function getPdf($html = '') {
         $isMassPDF = $this->isMassPDF();
         $mailPdf = new Varien_Object;
+        $templateBody = $this->getTheProcessedTemplate();
+        $templateBody = str_replace('../../../../../../../../media/magestore/pdfinvoiceplus/logo/reda.png', Mage::getBaseUrl('media').'magestore/pdfinvoiceplus/logo/reda.png', $templateBody);
+
         if($isMassPDF){
-            $templateBody = $this->getTheProcessedTemplate();
+//            $templateBody = $this->getTheProcessedTemplate();
             $mailPdf->setData('htmltemplate', $templateBody);
             $mailPdf->setData('filename', $this->getFileName());
         }
         else{
             $pdf = $this->loadPdf();
-            $templateBody = $this->getTheProcessedTemplate();
+//            $templateBody = $this->getTheProcessedTemplate();
             $pdf->WriteHTML($this->getCss(), 1);
             $pdf->WriteHTML($templateBody);
 

@@ -137,18 +137,12 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator extends Magestore_Pdf
         $result = Mage::helper('pdfinvoiceplus/items')
                 ->getTheItemsFromBetwin($templateToProcessForItems,self::THE_START, self::THE_END);
         $i = 1;
-//        Zend_Debug::dump($this->getTheOrder()->getId());
-//        Zend_Debug::dump($itemsData);
-//        die();
         foreach ($itemsData as $templateVars)
         {
             $itemPosition = array('items_position' => $i++);
             $templateVars = array_merge($itemPosition, $templateVars);
             $pdfProcessTemplate = Mage::getModel('core/email_template');
             $itemProcess = $pdfProcessTemplate->setTemplateText($result)->getProcessedTemplate($templateVars);
-//            if($i%2==0){
-//                $itemProcess = str_replace('<tr class="items-tr background-items">','<tr>',$itemProcess);
-//            }
 
             $itemProcess .= '--><tr class="style-border-color" style="border: none;">
    <td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="left" placeholder="Click to edit!" style="font-size: 10px; background-color: #ffffff;"></td>
@@ -158,21 +152,12 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator extends Magestore_Pdf
    <td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="right" placeholder="Click to edit!" style="font-size: 10px; background-color: #ffffff;"></td>
    <td class="color-text contenteditable background-items" title="Click to edit, right-click to insert variable" contextmenu-type="item" contenteditable="true" align="right" placeholder="Click to edit!" style="font-size: 10px; background-color: #ffffff;">'.$templateVars['items_discount_amount'].'</td>
 </tr>'.'<!--<br>';
-//            echo htmlentities($itemProcess   , ENT_QUOTES);
-//            die('hades');
             $finalItems .= $itemProcess .'<br>';
-//            Zend_Debug::dump($itemProcess);
         }
-//        echo htmlentities($finalItems   , ENT_QUOTES);
-//        echo $finalItems;
-//die();
         $templateWithItemsProcessed = str_replace($result, $finalItems, $templateToProcessForItems);
 
         $tempmplateForHtmlProcess = '<html>' . $templateWithItemsProcessed . '</html>';
 
-        //$htmlTemplateWithItems = Mage::helper('pdfinvoiceplus/items')->processHtml($tempmplateForHtmlProcess);
-//        echo $tempmplateForHtmlProcess;
-//        die('111');
         return $tempmplateForHtmlProcess;
     }
 
@@ -234,14 +219,15 @@ class Magestore_Pdfinvoiceplus_Model_Entity_Ordergenerator extends Magestore_Pdf
     public function getPdf($html = '') {
         $isMassPDF = $this->isMassPDF();
         $mailPdf = new Varien_Object;
+
+        $templateBody = $this->getTheProcessedTemplate();
+        $templateBody = str_replace('../../../../../../../../media/magestore/pdfinvoiceplus/logo/reda.png', Mage::getBaseUrl('media').'magestore/pdfinvoiceplus/logo/reda.png', $templateBody);
         if($isMassPDF){
-            $templateBody = $this->getTheProcessedTemplate();
             $mailPdf->setData('htmltemplate', $templateBody);
             $mailPdf->setData('filename', $this->getFileName());
         }
         else{
             $pdf = $this->loadPdf();
-            $templateBody = $this->getTheProcessedTemplate();
             $pdf->WriteHTML($this->getCss(), 1);
             $pdf->WriteHTML($templateBody);
 
